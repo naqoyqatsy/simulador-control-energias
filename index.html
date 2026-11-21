@@ -1,0 +1,1292 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Simulador de control de energías · Bomba P-101 (ejercicio de prueba)</title>
+<style>
+:root{color-scheme:light;--ink:#1d2733;--muted:#5b6876;--line:#d5dbe2;--bg:#f4f6f8;--card:#fff;--acc:#0f6e74;--acc2:#e7f3f3;--ok:#1f8a4c;--okbg:#e8f6ee;--bad:#c0392b;--badbg:#fdecea;--warn:#b26a00;--warnbg:#fff4e0;--sel:#f2a516}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;color:var(--ink);background:var(--bg);line-height:1.45}
+.banner{background:#fff4e0;color:#7a4a00;border-bottom:1px solid #f0d199;padding:8px 16px;font-size:13px;text-align:center}
+header{background:#14232f;color:#fff;padding:14px 20px}
+header h1{margin:0;font-size:19px;font-weight:600}
+header p{margin:3px 0 0;font-size:13px;color:#b9c6d2}
+main{max-width:1180px;margin:0 auto;padding:16px}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center}
+.progress{flex:1;min-width:200px;height:8px;background:#dde3e9;border-radius:8px;overflow:hidden}
+.progress>div{height:100%;background:var(--acc);transition:width .3s}
+.ptxt{font-size:13px;color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px 20px;margin-bottom:14px}
+.tag{display:inline-block;background:var(--acc2);color:var(--acc);font-weight:600;font-size:12px;padding:3px 9px;border-radius:20px;letter-spacing:.3px}
+h2{margin:8px 0 6px;font-size:20px}
+h3{font-size:16px;margin:14px 0 6px}
+.ctx{color:#33414f;margin:6px 0 14px}
+.hint{font-size:13px;color:var(--muted);margin:-6px 0 12px}
+.opt{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin:8px 0;cursor:pointer;background:#fff}
+.opt:hover{border-color:#9fb0c0}
+.opt input{margin-top:3px;flex:none;width:17px;height:17px;accent-color:var(--acc)}
+.opt.done{cursor:default}
+.opt.r-ok{border-color:var(--ok);background:var(--okbg)}
+.opt.r-bad{border-color:var(--bad);background:var(--badbg)}
+.opt.r-miss{border:1px dashed var(--warn);background:var(--warnbg)}
+.fb{font-size:13px;margin-top:5px;color:#33414f}
+.badge{display:inline-block;font-size:11px;font-weight:700;padding:1px 7px;border-radius:10px;margin-right:6px;vertical-align:1px}
+.b-ok{background:var(--ok);color:#fff}.b-bad{background:var(--bad);color:#fff}.b-crit{background:#7b1010;color:#fff}.b-miss{background:var(--warn);color:#fff}.b-neu{background:#8a96a3;color:#fff}
+.btns{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+button{font:inherit;border:0;border-radius:8px;padding:10px 18px;cursor:pointer;font-weight:600;color:var(--ink)}
+.primary{background:var(--acc);color:#fff}.primary:disabled{background:#9db8ba;cursor:not-allowed}
+.ghost{background:#fff;border:1px solid var(--line);color:var(--ink)}
+.result{border-radius:8px;padding:12px 14px;margin-top:14px;font-size:14px}
+.result.good{background:var(--okbg);border:1px solid #b5e0c6}
+.result.mid{background:var(--warnbg);border:1px solid #f0d199}
+.result.crit{background:var(--badbg);border:1px solid #efb7b0}
+.ref{font-size:12px;color:var(--muted);margin-top:6px}
+details{background:#fff;border:1px solid var(--line);border-radius:10px;margin-bottom:12px}
+details summary{padding:10px 14px;cursor:pointer;font-weight:600;font-size:14px}
+details .inner{padding:0 14px 14px}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{border:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+th{background:#eef2f5}
+.kpis{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}
+.kpi{flex:1;min-width:150px;border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:#fff}
+.kpi b{display:block;font-size:24px}
+.kpi span{font-size:12px;color:var(--muted)}
+.crow td:first-child{white-space:nowrap}
+ul.tight{margin:6px 0;padding-left:20px}
+textarea{width:100%;height:160px;font:12px monospace;margin-top:8px}
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+.mode{border:1px solid var(--line);border-radius:10px;padding:14px;background:#fafbfc}
+.mode h3{margin:0 0 6px}
+.mode p{font-size:13.5px;color:#33414f;margin:0 0 10px}
+@media (max-width:700px){.modes{grid-template-columns:1fr}}
+
+/* ---- Panel de práctica ---- */
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+.chip{border:1px solid var(--line);border-radius:8px;padding:6px 10px;background:#fff;font-size:13px}
+.chip b{font-size:14px}
+.chip.hot{border-color:#efb7b0;background:#fdf3f1}
+.chip.safe{border-color:#b5e0c6;background:#f1faf4}
+.msg{min-height:22px;font-size:13.5px;padding:8px 12px;border-radius:8px;background:#eef3f7;margin:8px 0}
+.msg.warn{background:var(--warnbg)}.msg.bad{background:var(--badbg)}.msg.good{background:var(--okbg)}
+.log{max-height:190px;overflow:auto;font-size:12.5px;border:1px solid var(--line);border-radius:8px;padding:6px 10px;background:#fbfcfd}
+.log div{padding:2px 0;border-bottom:1px dotted #e3e7eb}
+.log span{color:var(--muted);margin-right:6px;font-variant-numeric:tabular-nums}
+.chk li{margin:6px 0;list-style:none}
+.chk{padding-left:0}
+
+/* ---- Diagrama ---- */
+.dwrap{position:relative;border:1px solid var(--line);border-radius:10px;background:#e4e8ec;overflow:hidden;margin:6px 0 4px}
+.dwrap svg{display:block;width:100%;height:auto;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
+.dwrap.drag svg{cursor:grabbing}
+.dctl{position:absolute;top:8px;right:8px;display:flex;gap:4px;z-index:3}
+.dctl button{padding:4px 10px;font-size:15px;background:#fff;color:#1d2733;border:1px solid var(--line);border-radius:6px;line-height:1.2}
+.tip{position:absolute;pointer-events:none;background:#14232f;color:#fff;font-size:12px;padding:7px 9px;border-radius:6px;max-width:260px;display:none;z-index:4;box-shadow:0 4px 12px rgba(0,0,0,.25)}
+.tip b{display:block;margin-bottom:2px;font-size:12.5px}
+.tip .st{display:block;margin-top:4px;color:#ffd27a}
+.menu{position:absolute;z-index:6;background:#fff;border:1px solid #9fb0c0;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.25);min-width:220px;max-width:280px;overflow:hidden;display:none}
+.menu .mh{background:#14232f;color:#fff;font-size:12.5px;font-weight:700;padding:7px 10px}
+.menu .ms{font-size:11.5px;color:#ffd27a;font-weight:400;display:block}
+.menu button{display:block;width:100%;text-align:left;border-radius:0;padding:8px 11px;font-size:13px;font-weight:500;background:#fff;color:#1d2733;border-top:1px solid #eef1f4}
+.menu button:hover{background:#eef6f6}
+.menu button.lockb{color:#8a1c12;font-weight:600}
+.menu button.close{color:var(--muted);font-size:12px}
+.legend{font-size:12px;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap;margin:2px 2px 8px}
+.legend i{display:inline-block;width:18px;height:4px;border-radius:2px;vertical-align:middle;margin-right:5px}
+
+.scene text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;fill:#22303c;font-size:11px}
+.scene .lbl{font-size:11.5px;font-weight:700}
+.scene .zone{font-size:12px;font-weight:700;fill:#4a5866;letter-spacing:.4px}
+.scene .small{font-size:9.5px}
+.scene .vst{font-size:9.5px;font-weight:700}
+.scene .vst.open{fill:#1f8a4c}.scene .vst.closed{fill:#c0392b}
+.scene .flow{fill:none;stroke:#3fa2ff;stroke-width:3.5;stroke-linecap:round;stroke-dasharray:8 14;opacity:0;animation:fl .7s linear infinite;pointer-events:none}
+@keyframes fl{to{stroke-dashoffset:-22}}
+.scene.run .flow.main{opacity:.95}
+.scene.draining .flow.drain{opacity:.95}
+.scene .drip{fill:#3fa2ff;opacity:0}
+.scene.draining .drip{opacity:1;animation:drip 1s linear infinite}
+@keyframes drip{0%{transform:translateY(0);opacity:1}100%{transform:translateY(22px);opacity:0}}
+.scene .cable{fill:none;stroke:#59616a;stroke-width:6;stroke-linecap:round;stroke-linejoin:round;transition:stroke .4s}
+.scene.energized .cable{stroke:#ff9a1a}
+.scene .cableglow{fill:none;stroke:#ffd27a;stroke-width:2;stroke-dasharray:4 10;opacity:0;animation:fl 1s linear infinite}
+.scene.run .cableglow{opacity:.9}
+.scene .rot{transform-box:fill-box;transform-origin:center}
+.scene.run .rot{animation:spin .35s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.scene .mv{transition:transform .8s ease}
+.scene .needle{transition:transform 1.4s ease}
+.scene .scr{fill:#0f1a22}
+.scene .scrtxt{fill:#7dffa8;font-family:Consolas,monospace;font-size:11px}
+.scene .scrtxt.stop{fill:#ffb3a8}
+.scene .pt .hit,.scene .act .hit{fill:transparent;stroke:none}
+.scene.selectable .pt,.scene.operable .pt,.scene.operable .act{cursor:pointer}
+.scene.selectable .pt .hit,.scene.operable .pt .hit,.scene.operable .act .hit{stroke:#56708a;stroke-width:1.2;stroke-dasharray:4 3}
+.scene.selectable .pt:hover .hit,.scene.operable .pt:hover .hit,.scene.operable .act:hover .hit{fill:rgba(242,165,22,.16);stroke:#f2a516;stroke-width:2}
+.scene .pt.sel .hit{fill:rgba(242,165,22,.28);stroke:#f2a516;stroke-width:3;stroke-dasharray:none}
+.scene .pt.ok .hit{fill:rgba(31,138,76,.18);stroke:#1f8a4c;stroke-width:3;stroke-dasharray:none}
+.scene .pt.bad .hit{fill:rgba(192,57,43,.18);stroke:#c0392b;stroke-width:3;stroke-dasharray:none}
+.scene .pt.miss .hit{fill:rgba(178,106,0,.10);stroke:#b26a00;stroke-width:3;stroke-dasharray:6 4}
+.scene .info{cursor:help}
+.scene:not(.operable) #decg{display:none}
+.scene [data-cmd=go]:hover rect,.scene [data-cmd=nogo]:hover rect{filter:brightness(1.15)}
+.scene.operable [data-cmd]{cursor:pointer}
+.scene.operable [data-cmd]:hover rect{stroke:#fff;stroke-width:2}
+.scene.operable [data-cmd]:active{opacity:.7}
+.scene .heat{opacity:.45;transition:fill 1s;fill:#ff7a1a}
+.scene.draining .flow.drain{stroke-width:5}
+.scene .lk{opacity:0;transform:translateY(-8px);transition:opacity .4s,transform .4s;pointer-events:none}
+.scene .locked .lk{opacity:1;transform:none}
+.scene .lk.tagonly .pad{display:none}
+.scene #mm{opacity:0;transition:opacity .3s;pointer-events:none}
+.scene #mm.on{opacity:1}
+@media (max-width:600px){main{padding:10px}.card{padding:14px}h2{font-size:18px}}
+/* ---- Multi-dispositivo ---- */
+.ztabs{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
+.ztabs button{padding:7px 12px;font-size:13px;font-weight:600;background:#fff;border:1px solid var(--line);border-radius:20px;color:#33414f}
+.ztabs button.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.rot-hint{display:none;font-size:12px;color:var(--warn);margin:0 0 6px}
+.stickybar{position:sticky;top:0;z-index:20;background:#fff;padding:6px 0 2px;margin:0 -4px;padding-left:4px;padding-right:4px;border-bottom:1px solid #eef1f4}
+.stickybar .msg{margin:4px 0 6px}
+.mdec{display:none;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:8px 0;background:#f7f9fb}
+@media (max-width:760px){
+  main{padding:8px}
+  .card{padding:12px}
+  header h1{font-size:16px} header p{font-size:12px}
+  .banner{font-size:11.5px;padding:6px 10px}
+  .chips{gap:4px;margin:4px 0;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .chip{flex:none}
+  .dctl{top:auto;bottom:8px}
+  .chip{font-size:11.5px;padding:3px 7px}
+  .chip b{font-size:12px}
+  .msg{font-size:12.5px;padding:6px 9px}
+  .ztabs{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px}
+  .ztabs button{flex:none;padding:9px 13px}
+  .dctl button{padding:8px 13px;font-size:17px}
+  .menu{position:fixed!important;left:0!important;right:0!important;top:auto!important;bottom:0!important;max-width:none;min-width:0;width:100%;border-radius:14px 14px 0 0;box-shadow:0 -8px 30px rgba(0,0,0,.3);z-index:50;max-height:70vh;overflow:auto}
+  .menu .mh{font-size:14px;padding:12px 14px}
+  .menu button{padding:15px 16px;font-size:15.5px}
+  .tip{max-width:220px;font-size:11.5px}
+  .mdec{display:block}
+  .legend{font-size:11px;gap:8px}
+  .opt{padding:9px 10px}
+  .modes{gap:8px}
+  table{font-size:12px}
+  .btns button{flex:1 1 auto}
+}
+@media (max-width:760px) and (orientation:portrait){ .rot-hint{display:block} }
+
+</style>
+</head>
+<body>
+<div class="banner"><b>Ejercicio de prueba.</b> No forma parte de los documentos oficiales. Se basa en el borrador G-SSOMA-CE-00 v0.4; el escenario, los equipos y los datos son ficticios.</div>
+<header>
+  <h1>Simulador de control de energías · Bomba P-101</h1>
+  <p>Práctica virtual de identificación, aislación, bloqueo, verificación, ejecución con cambios y entrega</p>
+</header>
+<main>
+  <div class="toolbar" id="toolbar" style="display:none">
+    <div class="progress"><div id="bar" style="width:0%"></div></div>
+    <span class="ptxt" id="ptxt"></span>
+  </div>
+  <details id="dDiag" open style="display:none"><summary>Vista del equipo en terreno</summary><div class="inner" id="diagHolder"></div></details>
+  <details id="dFicha" style="display:none"><summary>Ficha F-SSOMA-CE-01 de P-101 (simulada, tal como llegó)</summary><div class="inner" id="fichaHolder"></div></details>
+  <div id="app"></div>
+</main>
+<script>
+const FICHA = `<table>
+<tr><th>Energía</th><th>Punto de aislación</th><th>Dispositivo</th><th>Disipación / comprobación</th></tr>
+<tr><td>Eléctrica 380 V</td><td>S-101, CCM-2 gaveta 4</td><td>Candado y tarjeta</td><td>Prueba de partida desde el DCS (modo mantención)</td></tr>
+<tr><td>Hidráulica succión</td><td>V-1</td><td>Bloqueo de volante</td><td>—</td></tr>
+<tr><td>Hidráulica descarga</td><td>V-2 <i>(indicada como válvula manual)</i></td><td>Bloqueo de volante</td><td>V-3 bloqueado abierto; PI-101 en 0</td></tr>
+</table>
+<p class="ref">Ficha simulada para el ejercicio. Contiene diferencias intencionales con lo que se ve en terreno.</p>`;
+// ---------- Datos del ejercicio ----------
+function o(t,c,crit,fb,req){return {t,c:!!c,crit:!!crit,fb:fb||'',req:!!req};}
+function na(t,fb){return {t,c:false,crit:false,fb,req:false,n:true};}
+
+const BASE = [
+{tag:'Paso 1 · Preparar',title:'Identificación de energías',type:'multi',
+ ctx:'Antes de intervenir revisas la ficha y recorres el equipo. Marca todas las energías que deben controlarse para cambiar el sello mecánico de P-101.',
+ opts:[
+  o('Eléctrica: alimentación 380 V del motor M-101',1,0,'Energía principal. Se aísla en el seccionador S-101.',1),
+  na('Eléctrica almacenada: condensadores del bus DC del variador VDF-101','No aplica a esta tarea. El cambio de sello no interviene el VDF ni su bus DC: la energía eléctrica hacia el equipo se controla con S-101 y la comprobación en bornes del motor. Sí aplica en intervenciones eléctricas sobre el VDF.'),
+  o('Hidráulica: presión de la línea de descarga y del cabezal',1,0,'El cabezal está presurizado. La retención CV-1 no sirve como aislación.',1),
+  o('Hidráulica: columna de succión desde TK-100',1,0,'El estanque alimenta la bomba por gravedad. Se aísla con V-1.'),
+  o('Neumática: actuador de la válvula V-2',1,0,'No figura en la ficha. El actuador puede mover V-2 si recibe aire y señal del DCS.'),
+  o('Térmica: fluido a 65 °C',1,0,'Hay riesgo de quemadura al abrir la carcasa. Exige drenar, verificar la temperatura y usar EPP.'),
+  o('Mecánica: inercia rotacional del conjunto motor-bomba',1,0,'Se controla con la detención total y la confirmación de que el eje está detenido.'),
+  o('Radiación ionizante',0,0,'En este escenario no hay fuentes radiactivas.')
+ ],ref:'G-SSOMA-CE-00 v0.4 §5.3 paso 1; definición de energía residual.'},
+{tag:'Paso 1 · Preparar',title:'La ficha no coincide con el equipo',type:'single',showFicha:true,
+ ctx:'En terreno ves que V-2 tiene un actuador neumático comandado desde el DCS y alimentado por la línea de aire VA-1. La ficha F-SSOMA-CE-01 indica V-2 como válvula manual. ¿Qué haces?',
+ opts:[
+  o('Detengo la preparación e informo al supervisor. El responsable de bloqueo y el dueño del área actualizan y validan la ficha con la energía neumática antes de continuar.',1,0,'Es el requisito crítico del paso 1: la ficha debe coincidir con el equipo. Validar la ficha contra la instalación corresponde al nivel de verificación 2b.'),
+  o('Sigo la ficha como está: fue aprobada y la válvula cierra igual.',0,1,'Se trabajaría con una energía que no está identificada ni controlada. El DCS puede abrir V-2 a través del actuador.'),
+  o('Corrijo la ficha a mano en terreno y sigo sin avisar.',0,0,'El responsable de bloqueo y el dueño del área no validan el cambio, así que la próxima cuadrilla repetirá el error.'),
+  o('Sigo y agrego la aislación neumática si me alcanza el tiempo.',0,1,'La aislación no puede depender del tiempo disponible.')
+ ],ref:'G-SSOMA-CE-00 v0.4 §5.3 paso 1 (F-SSOMA-CE-01) y §5.5 nivel 2b.'},
+{tag:'Paso 2 · Notificar',title:'Notificación al cliente',type:'single',
+ ctx:'La ficha ya está validada. El dueño del área es el jefe de turno de operaciones de la planta.',
+ opts:[
+  o('Notifico formalmente en el permiso de trabajo que P-101 queda bajo control de EQUANS y lo confirmo con el dueño del área.',1,0,'El cliente debe saber que el equipo queda bajo control de EQUANS, y debe quedar registrado en el permiso de trabajo.'),
+  o('Aviso por radio al operador de sala que vamos a intervenir.',0,0,'Un aviso verbal no queda registrado ni transfiere formalmente el control del equipo.'),
+  o('No notifico: el cliente programó el trabajo, así que ya sabe.',0,0,'Que el trabajo esté programado no es una notificación. Operación podría arrancar P-101 por necesidad de proceso.')
+ ],ref:'G-SSOMA-CE-00 v0.4 §5.3 paso 2.'},
+{tag:'Paso 3 · Detener',title:'Detención del equipo',type:'single',
+ ctx:'P-101 está en servicio y entrega 6 bar al cabezal.',
+ opts:[
+  o('Operación detiene P-101 desde la sala de control con el pulsador de parada del DCS, y yo confirmo en terreno que el eje está detenido antes de aislar.',1,0,'Requisito del paso 3: detención total y fin de la inercia. La detención se hace desde la sala.'),
+  o('Abro el seccionador S-101 con la bomba en marcha para ganar tiempo.',0,0,'Se penaliza: es una maniobra bajo carga sin detención previa desde la sala. No vulnera el control crítico, pero no es la secuencia correcta.'),
+  o('Detengo con el pulsador de emergencia de PB-101 y empiezo a aislar de inmediato.',0,0,'La parada de emergencia no reemplaza la secuencia normal, y empezar de inmediato ignora la inercia del conjunto.')
+ ],ref:'G-SSOMA-CE-00 v0.4 §5.3 paso 3.'},
+{tag:'Paso 4 · Aislar',title:'Selección de puntos de aislación',type:'multi',diagram:true,
+ ctx:'Selecciona en el diagrama (o en la lista) todos los puntos que quedarán con dispositivo de bloqueo y candado, en la posición que corresponda: <b>cerrados o abiertos</b>.',
+ hint:'Toca un elemento del diagrama para marcarlo o desmarcarlo.',
+ opts:[
+  o('S-101 · Seccionador en CCM-2',1,0,'Es un dispositivo de aislación con corte visible y se puede bloquear.'),
+  o('GM-101 · Guardamotor',0,0,'Es una protección, no un dispositivo de aislación. Se penaliza, pero no es crítico: la aislación eléctrica es S-101.'),
+  o('VDF-101 · Deshabilitación del variador (STO / parada por software)',0,1,'Un mando o un software no aísla.'),
+  o('DCS · Modo mantención',0,1,'Prohibición crítica: usar un PLC o un software como único aislamiento. El modo mantención sirve para la prueba de partida del paso 7, una vez bloqueado S-101.'),
+  na('PB-101 · Botonera local en OFF','Opcional: bloquear la botonera es una medida complementaria y no se evalúa. No reemplaza el bloqueo de S-101.'),
+  o('V-1 · Válvula de succión',1,0,'Aísla la columna de succión desde TK-100.'),
+  o('V-2 · Válvula de descarga, cerrada con bloqueo mecánico del actuador',1,0,'Aísla la presión del cabezal. Como tiene actuador, se bloquea mecánicamente y además se aísla su aire.'),
+  o('V-5 · Válvula de recirculación a TK-100',1,0,'Es un segundo camino de energía hidráulica hacia la bomba, y no aparece en la ficha. Se cierra y se bloquea.'),
+  o('VA-1 · Válvula de aire al actuador de V-2',1,0,'Aísla la energía neumática del actuador. Se cierra, se bloquea y luego se ventea aguas abajo.'),
+  o('CV-1 · Válvula de retención',0,1,'No es un dispositivo de aislación: puede quedar pasante y no se puede bloquear.'),
+  o('V-3 · Drenaje (bloqueado en posición abierta)',1,0,'Es parte del arreglo de aislación: se bloquea abierto para que una válvula pasante no reacumule presión en el cuerpo de la bomba. Si alguien lo cierra durante el trabajo, se pierde la disipación continua.'),
+  o('PSV-4 · Alivio de sobrepresión',0,0,'No se bloquea. Es una protección contra sobrepresión del sistema: bloquearla deja la protección anulada. Tiene que quedar libre y operativa.')
+ ],ids:['S-101','GM-101','VDF-101','DCS','PB-101','V-1','V-2','V-5','VA-1','CV-1','V-3','PSV-4'],
+ ref:'G-SSOMA-CE-00 v0.4 §5.2 (prohibiciones críticas, incluida la de mantener protecciones anuladas) y §5.3 paso 4.'},
+{tag:'Paso 5 · Bloquear y tarjetear',title:'Bloqueo de la cuadrilla',type:'multi',
+ ctx:'Cuadrilla EQUANS: Pedro (responsable de bloqueo, nivel 3), Ana y Jorge (autorizados, nivel 2) y Sergio (verificador eléctrico, nivel 4). La sala eléctrica está a 120 m de la bomba. Marca todo lo que corresponde.',
+ opts:[
+  o('Pongo candados de aislación en S-101, V-1, V-2, V-5 y VA-1 (cerrados) y en el drenaje V-3 (abierto), y dejo sus llaves en la caja de bloqueo.',1,0,'Cada punto de aislación queda con su candado en la posición segura y las llaves quedan controladas en la caja.'),
+  o('Cada trabajador instala su candado personal en la caja de bloqueo.',1,0,'Principio 1: nadie interviene sin su propio candado.',1),
+  o('Ubico la caja de bloqueo en terreno, junto a P-101.',1,0,'Requisito del paso 5: la caja va en terreno, junto al punto de trabajo.'),
+  o('Pongo en cada candado una tarjeta con nombre, fecha y motivo.',1,0,'Así se identifica al titular de cada candado.'),
+  o('Dejo la caja de bloqueo en la sala eléctrica, donde la ve el operador.',0,1,'Gatillo de detención: la caja está fuera del punto de trabajo.'),
+  o('El supervisor pone un candado grupal en representación de la cuadrilla.',0,1,'Viola el principio 1. Cada persona expuesta necesita su propio candado.'),
+  o('En VA-1 dejo solo la tarjeta, porque es una válvula pequeña.',0,1,'Una tarjeta sin candado no bloquea. La energía neumática queda sin control.')
+ ],ref:'G-SSOMA-CE-00 v0.4 §5.2 principio 1, §5.3 paso 5 y §5.5 (gatillos de detención).'},
+{tag:'Paso 6 · Disipar',title:'Disipación de energías residuales',type:'multi',
+ ctx:'Por radio, el operador de sala dice: “La línea ya está en cero, lo veo en el DCS”. Marca las acciones que corresponden.',
+ opts:[
+  o('Con el drenaje V-3 abierto y bloqueado, confirmo que descarga al sumidero hasta que deja de salir fluido.',1,0,'Es la evidencia física de la disipación hidráulica. Como queda bloqueado abierto, la disipación sigue durante todo el trabajo.',1),
+  na('Espero el tiempo de descarga del bus DC del VDF-101 que indica su placa.','No aplica a esta tarea, porque no se interviene el VDF. Sería obligatorio en un mantenimiento eléctrico del variador.'),
+  o('Venteo la línea de aire aguas abajo de VA-1, hasta el actuador.',1,0,'Así se disipa la energía neumática atrapada en el actuador.'),
+  o('Verifico la temperatura de la carcasa antes de abrir y uso el EPP para fluido caliente.',1,0,'Controla la energía térmica (65 °C).'),
+  o('Acepto la lectura del DCS y la registro como disipada.',0,1,'Prohibición crítica: aceptar la palabra del cliente o de un tercero como prueba. La evidencia tiene que ser física y propia.'),
+  o('Suelto un poco la tapa de la bomba para ver si sale algo.',0,1,'Abre una energía que todavía no se ha disipado ni comprobado. Ese es el evento que se busca evitar.')
+ ],ref:'G-SSOMA-CE-00 v0.4 §5.2 (prohibiciones críticas) y §5.3 paso 6.'},
+{tag:'Paso 7 · Comprobar energía cero',title:'Secuencia de comprobación',type:'single',
+ ctx:'Elige la secuencia de comprobación correcta antes del punto de liberación.',
+ opts:[
+  o('Con todos fuera de la zona y S-101 bloqueado, se activa el modo mantención en el DCS y se presiona la prueba de partida: P-101 no parte. Se confirma en terreno PI-101 en 0 bar y que el drenaje ya no tiene flujo, y se registra en R-SSOMA-CE-02.',1,0,'Es una comprobación propia de cada energía que se interviene: prueba de partida desde el DCS para la eléctrica y evidencia física para la hidráulica. No se mide en los bornes porque el cambio de sello no abre la caja de conexiones del motor: no hay intervención eléctrica.'),
+  o('Activo el modo mantención y presiono la prueba de partida; si no parte, hay energía cero. Lo registro.',0,1,'Comprueba solo la energía eléctrica: falta la evidencia física de la energía hidráulica (PI-101 en 0 bar y drenaje sin flujo).'),
+  o('Abro la caja de conexiones y mido en los bornes del motor; el operador confirma PI-101 en el DCS.',0,1,'No aplica medir en bornes: el cambio de sello no tiene intervención eléctrica, y abrir la caja agrega una exposición innecesaria. Además se omite la prueba de partida y la evidencia hidráulica es de un tercero.'),
+  o('Le pido al operador del cliente que confirme por radio que P-101 no parte y que la línea está en cero.',0,1,'Principio 3: EQUANS verifica con sus propios medios, aunque el cliente haya aislado.')
+ ],ref:'G-SSOMA-CE-00 v0.4 §5.2 principios 2 y 3 y §5.3 paso 7.'},
+{tag:'Punto de liberación',title:'Autorización para intervenir',type:'single',
+ ctx:'La comprobación salió conforme. ¿Quién autoriza el inicio de la intervención?',
+ opts:[
+  o('Firman el R-SSOMA-CE-02 el responsable de bloqueo (Pedro) y el supervisor EQUANS. Recién entonces se interviene.',1,0,'El punto de liberación requiere esas dos firmas.'),
+  o('Autoriza el operador de sala del cliente.',0,0,'El equipo está bajo control de EQUANS: la liberación la firman el responsable de bloqueo y el supervisor.'),
+  o('No hace falta firmar: todos vieron la comprobación.',0,1,'No habría comprobación de energía cero registrada, que es un gatillo de detención.')
+ ],ref:'G-SSOMA-CE-00 v0.4 §5.3 (punto de liberación).'}
+];
+
+const EVENTS = [
+{tag:'Paso 8 · Ejecutar con control',title:'Evento: colación',type:'single',
+ ctx:'La cuadrilla deja el área 45 minutos para colación. Al volver, los candados siguen puestos.',
+ opts:[
+  o('Antes de retomar reverificamos: candados y aislaciones intactos y una nueva comprobación de energía cero. Lo registramos en R-SSOMA-CE-02.',1,0,'Principio 4: una pausa con abandono del área invalida la verificación anterior.'),
+  o('Retomamos de inmediato: los candados siguen ahí.',0,1,'Gatillo de detención: retomar sin reverificar.'),
+  o('Retomamos, y el supervisor revisa los candados más tarde.',0,1,'La reverificación se hace antes de retomar, no después.')
+ ],ref:'G-SSOMA-CE-00 v0.4 §5.2 principio 4 y §5.5 (gatillos).'},
+{tag:'Paso 8 · Ejecutar con control',title:'Evento: cambio de cuadrilla',type:'single',
+ ctx:'Jorge termina su jornada y lo reemplaza Carlos, que no estuvo en el bloqueo inicial.',
+ opts:[
+  o('Carlos pone su candado personal en la caja y participa en la reverificación. Recién después Jorge saca su candado, y queda registrado.',1,0,'No hay ningún momento en que una persona esté expuesta sin su candado. Además, el cambio de cuadrilla obliga a reverificar.'),
+  o('Jorge le pasa su llave a Carlos para que siga con el mismo candado.',0,1,'Prohibición crítica: prestar llaves. Carlos quedaría expuesto sin candado propio.'),
+  o('Jorge deja su candado puesto y Carlos trabaja sin candado mientras tanto.',0,1,'Gatillo de detención: persona expuesta sin candado personal.')
+ ],ref:'G-SSOMA-CE-00 v0.4 §5.2 principios 1, 4 y 7; prohibiciones críticas.'},
+{tag:'Paso 8 · Ejecutar con control',title:'Evento: prueba pedida por el cliente',type:'single',
+ ctx:'Con el sello instalado, el cliente pide girar el motor un momento para verificar el sentido de giro antes de terminar el montaje.',
+ opts:[
+  o('Detenemos el trabajo y pedimos la solicitud por escrito. Con todos fuera de la zona y contados y las herramientas retiradas, se retiran los candados de forma controlada, se hace la prueba con R-SSOMA-CE-03 y luego se vuelve a aislar, bloquear y comprobar energía cero antes de retomar.',1,0,'Una prueba cambia la condición del equipo: hay que salir del control, probar y volver a entrar con una reverificación completa.'),
+  o('Damos un pulso corto desde el DCS mientras el mecánico mira el acople de cerca.',0,1,'Prohibición crítica: energizar con personas en la zona de peligro.'),
+  o('Saco solo mi candado y el de S-101, probamos y los vuelvo a poner sin medir.',0,1,'Principio 4: tras una prueba se reverifica. Además, alguien estaría quitando candados ajenos.')
+ ],ref:'G-SSOMA-CE-00 v0.4 §5.2 principio 4; §5.3 pasos 8–10 (R-SSOMA-CE-03).'},
+{tag:'Paso 8 · Ejecutar con control',title:'Evento: señal de energía',type:'single',
+ ctx:'Mientras se desmonta el sello, PI-101 sube a 1,5 bar y aparece goteo por la carcasa.',
+ opts:[
+  o('Paramos, salimos de la zona y aplicamos Stop Work. Informamos y revisamos si V-1 o V-2 están pasando. Se agrega aislación (doble bloqueo con purga o ciego) y se hace una nueva comprobación de energía cero antes de retomar.',1,0,'Principio 5: una señal de energía detiene el trabajo. Una válvula pasante obliga a reforzar la aislación.'),
+  o('Abro más el drenaje V-3 y seguimos trabajando.',0,1,'Se sigue trabajando con una señal de energía activa (gatillo de detención).'),
+  o('Le pido al operador que cierre más V-1 y seguimos.',0,1,'Además de seguir con energía presente, alguien opera un punto bloqueado.')
+ ],ref:'G-SSOMA-CE-00 v0.4 §5.2 principio 5 y Política Stop Work.'},
+{tag:'Paso 8 · Ejecutar con control',title:'Evento: se suma una persona del cliente',type:'single',
+ ctx:'Un eléctrico del cliente llega a revisar la caja de conexiones del motor. Dice: “El bloqueo de EQUANS ya me cubre”.',
+ opts:[
+  o('No interviene hasta que pone su propio candado en la caja de bloqueo. Le informo el estado de la aislación y queda registrado.',1,0,'Principio 1: nadie interviene sin su propio candado, sea de EQUANS o no.'),
+  o('Lo dejo trabajar acompañado por Sergio.',0,1,'Gatillo de detención: una persona expuesta sin candado personal.'),
+  o('Lo dejo trabajar porque es del cliente y responde a su propio estándar.',0,1,'Principio 6: rige el requisito más exigente. Además queda una persona expuesta sin candado.')
+ ],ref:'G-SSOMA-CE-00 v0.4 §5.2 principios 1 y 6.'}
+];
+
+const END = [
+{tag:'Paso 9 · Retirar bloqueos',title:'Retiro de bloqueos',type:'multi',
+ ctx:'El trabajo terminó. Ana tuvo que irse de urgencia a otra faena y dejó su candado puesto. Marca las acciones que corresponden.',
+ opts:[
+  o('Retiro herramientas y materiales, y vuelvo a instalar la guarda del acople.',1,0,'El equipo tiene que quedar en condición de operar.'),
+  o('Verifico que todo el personal esté fuera de la zona de peligro y contado.',1,0,'Es el requisito crítico del paso 9.',1),
+  o('Cada trabajador presente retira su propio candado.',1,0,'Principio 7.'),
+  o('Para el candado de Ana se aplica el flujo excepcional R-SSOMA-18, ubicándola y confirmando que no está en la zona.',1,0,'Es la única excepción formal al principio 7.',1),
+  o('Retirados los candados, cierro el drenaje V-3, restituyo el aire en VA-1 y dejo las válvulas en posición de operación según la ficha.',1,0,'Así se restituye la configuración de proceso de forma controlada.'),
+  o('El supervisor corta el candado de Ana para no atrasar la entrega.',0,1,'Prohibición crítica: retirar candados ajenos fuera del flujo formal.')
+ ],ref:'G-SSOMA-CE-00 v0.4 §5.2 principio 7 y §5.3 paso 9 (R-SSOMA-39).'},
+{tag:'Paso 10 · Arranque y entrega',title:'Entrega del equipo',type:'single',
+ ctx:'Se retiraron todos los bloqueos.',
+ opts:[
+  o('Entrego P-101 por escrito al dueño del área con R-SSOMA-CE-03 y cierro el permiso. Operación arranca con el personal fuera de la zona.',1,0,'Es el requisito del paso 10: entrega formal y escrita al dueño del área.'),
+  o('Aviso por radio que P-101 quedó lista.',0,0,'No hay entrega formal ni registro, y el permiso queda abierto.'),
+  o('El mecánico arranca desde PB-101 para confirmar que quedó bien antes de entregar.',0,0,'El arranque lo hace operación después de la entrega formal; arrancar antes es una prueba sin control.')
+ ],ref:'G-SSOMA-CE-00 v0.4 §5.3 paso 10.'}
+];
+
+
+
+// ---------- Escena ----------
+function lockG(x,y,tagonly){return `<g class="lk${tagonly?' tagonly':''}"><g transform="translate(${x} ${y})">
+<g class="pad"><path d="M-6 1 v-8 a6 6 0 0 1 12 0 v8" stroke="#4a4f55" stroke-width="2.6" fill="none"/>
+<rect x="-9" y="0" width="18" height="15" rx="2.5" fill="#c62828" stroke="#7d1414"/><circle cx="0" cy="6.5" r="2" fill="#fff"/><rect x="-.8" y="7" width="1.6" height="4" fill="#fff"/></g>
+<line x1="0" y1="${tagonly?0:15}" x2="0" y2="21" stroke="#333" stroke-width="1"/>
+<rect x="-17" y="21" width="34" height="21" rx="2" fill="#f2c230" stroke="#333" stroke-width=".8"/>
+<rect x="-17" y="21" width="34" height="6" fill="#c62828"/>
+<text x="0" y="26" text-anchor="middle" style="font-size:5px;font-weight:700;fill:#fff">PELIGRO</text>
+<text class="t1" x="0" y="33" text-anchor="middle" style="font-size:5.5px;font-weight:700">NO</text>
+<text class="t2" x="0" y="39.5" text-anchor="middle" style="font-size:5.5px;font-weight:700">OPERAR</text></g></g>`;}
+function hp(x1,x2,y,w){w=w||16;return `<rect x="${x1}" y="${y-w/2}" width="${x2-x1}" height="${w}" fill="url(#gH)" stroke="#6b757e" stroke-width=".6"/>`;}
+function vp(x,y1,y2,w){w=w||16;return `<rect x="${x-w/2}" y="${y1}" width="${w}" height="${y2-y1}" fill="url(#gV)" stroke="#6b757e" stroke-width=".6"/>`;}
+function flangeV(x,y){return `<rect x="${x-13}" y="${y-3}" width="26" height="6" rx="1" fill="#7b858e"/>`;}
+function flangeH(x,y){return `<rect x="${x-3}" y="${y-13}" width="6" height="26" rx="1" fill="#7b858e"/>`;}
+function gauge(cx,cy,r,max,id,unit,maj){
+  let t='';for(let i=0;i<=10;i++){const a=(-120+i*24)*Math.PI/180;t+=`<line x1="${cx+(r-6)*Math.sin(a)}" y1="${cy-(r-6)*Math.cos(a)}" x2="${cx+(r-2)*Math.sin(a)}" y2="${cy-(r-2)*Math.cos(a)}" stroke="#333" stroke-width="${i%5?0.8:1.8}"/>`;}
+  return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="#fff" stroke="#3f4850" stroke-width="3"/>${t}
+  <text x="${cx-r*0.62}" y="${cy+r*0.55}" style="font-size:6px">0</text><text x="${cx+r*0.42}" y="${cy+r*0.55}" style="font-size:6px">${max}</text>
+  <text x="${cx}" y="${cy+r*0.62}" text-anchor="middle" style="font-size:6.5px">${unit}</text>
+  <g id="${id}" class="needle" style="transform-origin:${cx}px ${cy}px;transform:rotate(-120deg)"><line x1="${cx}" y1="${cy}" x2="${cx}" y2="${cy-r+7}" stroke="#c62828" stroke-width="2"/></g>
+  <circle cx="${cx}" cy="${cy}" r="2.6" fill="#333"/>`;
+}
+
+function sceneSVG(){
+return `<svg class="scene" viewBox="0 0 1200 640" xmlns="http://www.w3.org/2000/svg">
+<defs>
+ <linearGradient id="gH" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7f8a94"/><stop offset=".35" stop-color="#eef2f5"/><stop offset=".6" stop-color="#b8c2cb"/><stop offset="1" stop-color="#66717b"/></linearGradient>
+ <linearGradient id="gV" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#7f8a94"/><stop offset=".35" stop-color="#eef2f5"/><stop offset=".6" stop-color="#b8c2cb"/><stop offset="1" stop-color="#66717b"/></linearGradient>
+ <linearGradient id="gMotor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a4d6a"/><stop offset=".4" stop-color="#5b8db5"/><stop offset="1" stop-color="#1f3a51"/></linearGradient>
+ <linearGradient id="gPump" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5b8db5"/><stop offset="1" stop-color="#22435e"/></linearGradient>
+ <linearGradient id="gTank" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#9aa5ae"/><stop offset=".3" stop-color="#f3f6f8"/><stop offset=".7" stop-color="#c3ccd3"/><stop offset="1" stop-color="#848f99"/></linearGradient>
+ <linearGradient id="gCab" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#d7dad3"/><stop offset="1" stop-color="#c3c7c0"/></linearGradient>
+ <linearGradient id="gWater" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7cc4f5" stop-opacity=".75"/><stop offset="1" stop-color="#2f86c9" stop-opacity=".85"/></linearGradient>
+ <pattern id="grate" width="10" height="10" patternUnits="userSpaceOnUse"><rect width="10" height="10" fill="#c9cfd4"/><path d="M0 0H10M0 0V10" stroke="#9aa3ab" stroke-width="1.4"/></pattern>
+ <pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="#f2c230"/><rect width="3" height="6" fill="#1d1d1d"/></pattern>
+ <filter id="sh" x="-10%" y="-10%" width="130%" height="130%"><feDropShadow dx="1.5" dy="2.5" stdDeviation="2" flood-opacity=".25"/></filter>
+</defs>
+
+<rect x="0" y="0" width="1200" height="640" fill="#e4e8ec"/>
+<rect x="14" y="14" width="322" height="372" rx="8" fill="#eef0ec" stroke="#b9bfb6"/>
+<text x="28" y="34" class="zone">SALA ELÉCTRICA · CCM-2 (a 120 m)</text>
+<rect x="14" y="398" width="322" height="228" rx="8" fill="#e9edf1" stroke="#b9c2cb"/>
+<text x="28" y="418" class="zone">SALA DE CONTROL · DCS</text>
+<rect x="348" y="14" width="840" height="612" rx="8" fill="#f4f6f7" stroke="#b9c2cb"/>
+<text x="362" y="34" class="zone">ÁREA DE PROCESO · NIVEL 0</text>
+<rect x="349" y="505" width="838" height="120" fill="url(#grate)" opacity=".8"/>
+
+<!-- CCM -->
+<g filter="url(#sh)">
+<rect x="40" y="48" width="270" height="330" rx="4" fill="url(#gCab)" stroke="#8a8f89"/>
+<rect x="40" y="48" width="270" height="18" fill="#b4b8b1"/>
+<text x="175" y="61" text-anchor="middle" class="lbl">CCM-2 · 380 V</text>
+${[['2','C-201'],['3','Reserva']].map((d,i)=>{const y=128+i*54;return `<rect x="50" y="${y}" width="250" height="48" rx="3" fill="#dfe2dc" stroke="#9a9f98"/><circle cx="80" cy="${y+24}" r="12" fill="#f2c230" stroke="#6b6b6b"/><rect x="77" y="${y+12}" width="6" height="24" rx="2" fill="#c62828"/><text x="105" y="${y+21}" class="small">Gaveta ${d[0]}</text><text x="105" y="${y+34}" class="lbl" style="font-size:10.5px">${d[1]}</text><circle cx="285" cy="${y+16}" r="4" fill="#7fd36b"/>`}).join('')}
+<rect x="50" y="74" width="250" height="48" rx="3" fill="#dfe2dc" stroke="#9a9f98"/>
+<text x="105" y="95" class="small">Gaveta 1</text><text x="105" y="108" class="lbl" style="font-size:10.5px">P-102 · S-102</text>
+<circle id="p102led" cx="285" cy="90" r="4" fill="#7fd36b"/>
+<rect x="50" y="238" width="250" height="134" rx="3" fill="#e6e9e3" stroke="#8a8f89" stroke-width="1.4"/>
+<text x="60" y="251" class="lbl" style="font-size:10.5px">Gaveta 4 · P-101</text>
+</g>
+<!-- S-102 (gaveta 1) -->
+<g class="pt" data-id="S-102"><rect class="hit" x="62" y="78" width="40" height="40" rx="5"/>
+ <circle cx="80" cy="98" r="12" fill="#f2c230" stroke="#6b6b6b"/>
+ <g id="s102h" class="mv" style="transform-origin:80px 98px"><rect x="77" y="86" width="6" height="24" rx="2" fill="#c62828"/></g>
+ ${lockG(122,92)}
+</g>
+
+<!-- Cable y bandeja -->
+<rect x="296" y="36" width="500" height="10" fill="#b0b7bd" stroke="#8a939b"/>
+<path d="M300 48 V41 H778 V392" class="cable"/>
+<path d="M300 48 V41 H778 V392" class="cableglow"/>
+<text x="560" y="60" text-anchor="middle" class="small">bandeja · cable de fuerza a M-101</text>
+
+<!-- S-101 -->
+<g class="pt" data-id="S-101"><rect class="hit" x="58" y="256" width="64" height="76" rx="5"/>
+ <text x="90" y="266" text-anchor="middle" class="lbl" style="font-size:10px">S-101</text>
+ <rect x="62" y="270" width="56" height="56" rx="4" fill="#f2c230" stroke="#6b6b6b"/>
+ <text x="90" y="280" text-anchor="middle" class="small" style="font-weight:700">I</text>
+ <text x="66" y="301" class="small" style="font-weight:700">O</text>
+ <circle cx="90" cy="298" r="15" fill="#3b3f44"/>
+ <g id="s101h" class="mv" style="transform-origin:90px 298px"><rect x="85" y="279" width="10" height="38" rx="4" fill="#c62828" stroke="#7d1414"/></g>
+ ${lockG(90,326)}
+</g>
+<!-- GM-101 -->
+<g class="pt" data-id="GM-101"><rect class="hit" x="126" y="264" width="42" height="74" rx="5"/>
+ <rect x="130" y="270" width="34" height="52" rx="3" fill="#2f3439"/><circle cx="147" cy="285" r="7" fill="#e8e8e8"/><line x1="147" y1="285" x2="151" y2="281" stroke="#c62828" stroke-width="2"/>
+ <rect id="gmind" x="136" y="300" width="22" height="12" rx="2" fill="#1f8a4c"/><text id="gmtxt" x="147" y="309" text-anchor="middle" style="font-size:7px;fill:#fff;font-weight:700">ON</text>
+ <text x="147" y="333" text-anchor="middle" class="small" style="font-weight:700">GM-101</text>
+ ${lockG(147,338)}
+</g>
+<!-- Voltímetro -->
+<g class="info" data-info="VM-101">
+ ${gauge(199,294,22,500,'vneedle','V')}
+ <text x="199" y="331" text-anchor="middle" class="small" style="font-weight:700">VM-101</text>
+</g>
+<!-- VDF-101 -->
+<g class="pt" data-id="VDF-101"><rect class="hit" x="228" y="258" width="68" height="96" rx="5"/>
+ <rect x="232" y="264" width="60" height="72" rx="3" fill="#3a4148"/>
+ <rect x="237" y="272" width="50" height="18" fill="#0f1a22"/><text id="vdfd" x="262" y="285" text-anchor="middle" class="scrtxt" style="font-size:10px">50.0 Hz</text>
+ <circle cx="248" cy="306" r="4" fill="#7fd36b"/><circle id="stoled" cx="262" cy="306" r="4" fill="#666"/><circle cx="276" cy="306" r="4" fill="#666"/>
+ <text x="262" y="327" text-anchor="middle" style="font-size:6.5px;fill:#ccc">RUN  STO  FLT</text>
+ <text x="262" y="348" text-anchor="middle" class="small" style="font-weight:700">VDF-101</text>
+</g>
+
+<!-- DCS -->
+<rect x="44" y="436" width="262" height="140" rx="6" fill="#2b3036" filter="url(#sh)"/>
+<rect x="54" y="446" width="242" height="120" class="scr"/>
+<text id="dcsl1" x="64" y="466" class="scrtxt">P-101 · AGUA DE PROCESO</text>
+<text id="dcsst" x="64" y="484" class="scrtxt">ESTADO: EN MARCHA</text>
+<text id="dcsp" x="64" y="500" class="scrtxt">PI-101: 6,0 bar · FI: 85 m3/h</text>
+<g class="pt" data-id="DCS"><rect class="hit" x="58" y="508" width="234" height="54" rx="5"/>
+<g data-cmd="partir"><rect x="62" y="516" width="52" height="34" rx="4" fill="#1d5a32" stroke="#5fd08a"/><text x="88" y="537" text-anchor="middle" style="fill:#d9ffe6;font-size:8.5px;font-weight:700">PARTIR</text></g>
+<g data-cmd="parada"><rect x="118" y="516" width="52" height="34" rx="4" fill="#5a1d1d" stroke="#e07a6e"/><text x="144" y="537" text-anchor="middle" style="fill:#ffe0dc;font-size:8.5px;font-weight:700">PARADA</text></g>
+<g data-cmd="mant"><rect id="dcsmaint" x="174" y="516" width="56" height="34" rx="4" fill="#24435c" stroke="#5aa6e0"/><text x="202" y="531" text-anchor="middle" style="fill:#d9ecff;font-size:8px;font-weight:700">MODO</text><text x="202" y="543" text-anchor="middle" style="fill:#d9ecff;font-size:8px;font-weight:700">MANTENCIÓN</text></g>
+ <g id="dcstest" data-cmd="prueba" style="opacity:.25;transition:opacity .4s"><rect x="234" y="516" width="54" height="34" rx="4" fill="#4a3a0c" stroke="#f2c230"/><text x="261" y="531" text-anchor="middle" style="fill:#ffe9a8;font-size:8px;font-weight:700">PRUEBA</text><text x="261" y="543" text-anchor="middle" style="fill:#ffe9a8;font-size:8px;font-weight:700">PARTIDA</text></g>
+</g>
+<rect x="150" y="576" width="50" height="10" fill="#555"/><rect x="110" y="586" width="130" height="8" rx="3" fill="#777"/>
+<path d="M300 612 H1168 V236 H1134" fill="none" stroke="#7d8b98" stroke-width="1.3" stroke-dasharray="6 5"/>
+<path d="M262 386 V354" fill="none" stroke="#7d8b98" stroke-width="1.3" stroke-dasharray="6 5"/>
+<text x="740" y="606" text-anchor="middle" class="small" style="fill:#6b7a88">señal DCS → actuador V-2</text>
+
+<!-- Estanque -->
+<g class="info" data-info="TK-100" filter="url(#sh)">
+ <rect x="400" y="70" width="120" height="180" fill="url(#gTank)" stroke="#6d7882"/>
+ <ellipse cx="460" cy="70" rx="60" ry="12" fill="#dfe5ea" stroke="#6d7882"/>
+ <rect x="401" y="120" width="118" height="129" fill="url(#gWater)"/>
+ <ellipse cx="460" cy="250" rx="60" ry="12" fill="#8d98a1" stroke="#6d7882"/>
+ <rect x="386" y="110" width="8" height="130" fill="#fff" stroke="#6d7882"/><rect x="387" y="140" width="6" height="99" fill="#3f9be0"/>
+ <text x="460" y="98" text-anchor="middle" class="lbl">TK-100</text><text x="460" y="112" text-anchor="middle" class="small">agua 65 °C</text>
+</g>
+<rect x="408" y="250" width="10" height="40" fill="#6d7882"/><rect x="502" y="250" width="10" height="40" fill="#6d7882"/>
+
+<!-- Succión -->
+${vp(460,256,452)}${hp(452,578,444)}${flangeV(460,262)}${flangeH(572,444)}
+<path class="flow main" d="M460 262 V444 H578"/>
+<g class="pt" data-id="V-1"><rect class="hit" x="430" y="318" width="102" height="58" rx="5"/>
+ <polygon points="446,330 474,330 460,347" fill="#3f4850"/><polygon points="446,364 474,364 460,347" fill="#3f4850"/>
+ <g id="v1w" class="mv"><line x1="474" y1="347" x2="504" y2="347" stroke="#555" stroke-width="3"/><ellipse cx="502" cy="347" rx="5" ry="16" fill="none" stroke="#c62828" stroke-width="4"/></g>
+ <text x="440" y="341" text-anchor="end" class="lbl" style="font-size:10.5px">V-1</text>
+ <text id="v1s" x="440" y="354" text-anchor="end" class="vst open">ABIERTA</text>
+ ${lockG(526,368)}
+</g>
+
+<!-- Recirculación V-5 -->
+${hp(520,676,150,10)}${vp(670,145,294,10)}
+<g class="pt" data-id="V-5"><rect class="hit" x="620" y="190" width="94" height="48" rx="5"/>
+ <polygon points="660,202 680,202 670,214" fill="#3f4850"/><polygon points="660,226 680,226 670,214" fill="#3f4850"/>
+ <g id="v5w" class="mv"><line x1="680" y1="214" x2="702" y2="214" stroke="#555" stroke-width="2.5"/><ellipse cx="700" cy="214" rx="4" ry="12" fill="none" stroke="#c62828" stroke-width="3.5"/></g>
+ <text x="656" y="205" text-anchor="end" class="lbl" style="font-size:10.5px">V-5</text>
+ <text x="656" y="216" text-anchor="end" class="small">recirc.</text>
+ <text id="v5s" x="656" y="228" text-anchor="end" class="vst open">ABIERTA</text>
+ ${lockG(722,222)}
+</g>
+<text x="596" y="142" text-anchor="middle" class="small">recirculación mínima → TK-100</text>
+
+<!-- Bomba y motor -->
+<rect x="556" y="488" width="306" height="16" fill="#3c4247"/>
+<g class="info" data-info="P-101">
+ <circle cx="620" cy="444" r="44" fill="url(#gPump)" stroke="#1c3348" stroke-width="1.5"/>
+ <circle cx="620" cy="444" r="16" fill="#284a66" stroke="#1c3348"/>
+ <rect x="604" y="356" width="32" height="50" fill="url(#gPump)" stroke="#1c3348"/>
+ <rect x="598" y="476" width="44" height="14" fill="#2a4d6a"/>
+ <text x="620" y="448" text-anchor="middle" style="fill:#fff;font-weight:700;font-size:11px">P-101</text>
+ 
+</g>
+<rect x="664" y="430" width="50" height="30" rx="3" fill="url(#hatch)" stroke="#333"/>
+<text x="689" y="425" text-anchor="middle" class="small">guarda</text>
+<g class="act" data-id="M-101"><rect class="hit" x="708" y="384" width="176" height="106" rx="8"/>
+ <rect x="714" y="404" width="136" height="82" rx="12" fill="url(#gMotor)" stroke="#1c3348" stroke-width="1.5"/>
+ ${Array.from({length:11},(_,i)=>`<line x1="${726+i*11}" y1="408" x2="${726+i*11}" y2="482" stroke="#1c3348" stroke-width="1.2" opacity=".6"/>`).join('')}
+ <rect x="758" y="390" width="40" height="16" rx="2" fill="#2a4d6a" stroke="#1c3348"/>
+ <circle cx="858" cy="445" r="20" fill="#3a5a75" stroke="#1c3348"/>
+ <g class="rot"><circle cx="858" cy="445" r="16" fill="none" stroke="#9fc2df" stroke-width="1"/>${[0,60,120].map(a=>`<line x1="858" y1="429" x2="858" y2="461" stroke="#cfe3f3" stroke-width="2.5" transform="rotate(${a} 858 445)"/>`).join('')}</g>
+ <text x="782" y="452" text-anchor="middle" style="fill:#fff;font-weight:700;font-size:11px">M-101</text>
+ <text x="782" y="466" text-anchor="middle" style="fill:#d9ecff;font-size:9.5px">380 V</text>
+</g>
+<!-- Multímetro -->
+<g id="decg" class="act" data-id="DEC">
+ <rect x="362" y="536" width="672" height="56" rx="8" fill="#ffffff" fill-opacity=".92" stroke="#9fb0c0"/>
+ <text x="376" y="557" style="font-size:12.5px;font-weight:700;fill:#1d2733">DECISIÓN DE INTERVENCIÓN</text>
+ <text x="376" y="573" style="font-size:9.5px;fill:#5b6876">Decide cuando el equipo esté en condición segura.</text>
+ <text x="376" y="585" style="font-size:9.5px;fill:#5b6876">Se revisan los pasos previos y su orden.</text>
+ <g data-cmd="go"><rect x="640" y="545" width="210" height="38" rx="7" fill="#1f8a4c"/><text x="745" y="569" text-anchor="middle" style="fill:#fff;font-size:12px;font-weight:700">✅ Intervenir: cambio de sello</text></g>
+ <g data-cmd="nogo"><rect x="860" y="545" width="164" height="38" rx="7" fill="#8a2a1f"/><text x="942" y="569" text-anchor="middle" style="fill:#fff;font-size:12px;font-weight:700">⛔ No intervenir todavía</text></g>
+</g>
+<g id="intv" style="display:none"><rect id="intvbg" x="470" y="506" width="300" height="26" rx="6" fill="#1f8a4c"/><text id="intvtxt" x="620" y="523" text-anchor="middle" style="fill:#fff;font-size:12px;font-weight:700">CAMBIO DE SELLO EN CURSO</text></g>
+<g id="mm"><path d="M770 392 L742 352 M786 392 L800 352" stroke="#c62828" stroke-width="1.6" fill="none"/>
+ <rect x="718" y="314" width="90" height="40" rx="6" fill="#f2c230" stroke="#333"/><rect x="724" y="320" width="78" height="18" fill="#cfe0c8" stroke="#333" stroke-width=".6"/>
+ <text id="mmtxt" x="763" y="333" text-anchor="middle" style="font-family:Consolas,monospace;font-size:11px;font-weight:700">0 V</text>
+ <text x="763" y="349" text-anchor="middle" style="font-size:7px">detector · vivo–muerto–vivo</text></g>
+
+<!-- Descarga -->
+${vp(620,292,358)}${hp(612,1190,300)}<circle cx="620" cy="300" r="9" fill="#9aa5ae"/><circle cx="670" cy="300" r="7" fill="#9aa5ae"/>
+<path class="flow main" d="M620 356 V300 H1190"/>
+<g pointer-events="none">
+ <rect class="heat" x="452" y="366" width="16" height="86"/>
+ <rect class="heat" x="452" y="436" width="126" height="16"/>
+ <circle class="heat" cx="620" cy="444" r="44"/>
+ <rect class="heat" x="604" y="292" width="32" height="114"/>
+ <rect class="heat" x="612" y="292" width="480" height="16"/>
+ <rect class="heat" x="665" y="228" width="10" height="66"/>
+ <rect class="heat" x="953" y="308" width="10" height="72"/>
+</g>
+
+<g class="pt" data-id="CV-1"><rect class="hit" x="690" y="270" width="52" height="54" rx="5"/>
+ ${flangeH(698,300)}${flangeH(734,300)}<rect x="701" y="288" width="30" height="24" rx="5" fill="#3f4850"/>
+ <path d="M708 300 H722 M717 294 L723 300 L717 306" stroke="#fff" stroke-width="2" fill="none"/>
+ <text x="716" y="282" text-anchor="middle" class="small" style="font-weight:700">CV-1</text>
+ ${lockG(716,322,true)}
+</g>
+<g class="info" data-info="TI-101">
+ <rect x="926" y="258" width="8" height="34" fill="#7b858e"/>
+ <rect id="tibox" x="900" y="204" width="60" height="56" rx="8" fill="#1d2329" stroke="#ff7a1a" stroke-width="3"/>
+ <text id="titxt" x="930" y="229" text-anchor="middle" style="font-family:Consolas,monospace;font-size:16px;font-weight:700;fill:#ffb36b">65 °C</text>
+ <rect id="tistb" x="905" y="237" width="50" height="16" rx="3" fill="#c0392b"/>
+ <text id="tist" x="930" y="248.5" text-anchor="middle" style="font-size:7.5px;font-weight:700;fill:#fff">NO INTERVENIR</text>
+ <text x="930" y="198" text-anchor="middle" class="lbl" style="font-size:10.5px">TI-101</text>
+</g>
+<g class="info" data-info="PI-101">
+ ${vp(862,258,292,6)}
+ ${gauge(862,232,26,10,'needle','bar')}
+ <text x="862" y="198" text-anchor="middle" class="lbl" style="font-size:10.5px">PI-101</text>
+</g>
+<g class="pt" data-id="PB-101"><rect class="hit" x="872" y="372" width="58" height="66" rx="5"/>
+ <rect x="898" y="420" width="5" height="82" fill="#6b757e"/>
+ <rect x="878" y="378" width="46" height="48" rx="4" fill="#d9dcd6" stroke="#6b6b6b"/>
+ <circle cx="891" cy="392" r="6" fill="#1f8a4c"/><circle cx="911" cy="392" r="6" fill="#222"/>
+ <circle cx="901" cy="413" r="8" fill="#c62828" stroke="#f2c230" stroke-width="2.5"/>
+ <text x="893" y="474" text-anchor="end" class="small" style="font-weight:700">PB-101</text>
+ ${lockG(901,330)}
+</g>
+${vp(958,308,470,10)}
+<path class="flow drain" d="M958 308 V470"/>
+<rect x="938" y="472" width="40" height="18" rx="3" fill="#5c656d"/><text x="958" y="502" text-anchor="middle" class="small">sumidero</text>
+<circle class="drip" cx="958" cy="476" r="3"/>
+<g class="pt" data-id="V-3"><rect class="hit" x="934" y="370" width="80" height="50" rx="5"/>
+ <polygon points="949,383 967,383 958,395" fill="#3f4850"/><polygon points="949,407 967,407 958,395" fill="#3f4850"/>
+ <circle cx="958" cy="395" r="4" fill="#222"/>
+ <g id="v3l" class="mv" style="transform-origin:958px 395px"><rect x="958" y="392" width="30" height="6" rx="3" fill="#c62828"/></g>
+ <text x="972" y="384" class="lbl" style="font-size:10.5px">V-3</text>
+ <text id="v3s" x="972" y="416" class="vst closed">CERRADA</text>
+ ${lockG(930,428)}
+</g>
+<g class="pt" data-id="PSV-4"><rect class="hit" x="992" y="166" width="62" height="126" rx="5"/>
+ ${vp(1020,258,292,12)}
+ <rect x="1008" y="228" width="24" height="32" rx="3" fill="#b23a2e"/>
+ <path d="M1011 228 L1015 192 H1025 L1029 228 Z" fill="#c9473a"/>
+ <rect x="1014" y="180" width="12" height="13" fill="#7a2a22"/>
+ <path d="M1016 196 l8 4 l-8 4 l8 4 l-8 4 l8 4 l-8 4" stroke="#f3d2cd" fill="none" stroke-width="1.2"/>
+ ${hp(1032,1052,244,8)}
+ <text x="1004" y="200" text-anchor="end" class="small" style="font-weight:700">PSV-4</text>
+ <text x="1004" y="212" text-anchor="end" class="small">alivio</text>
+ ${lockG(1020,140)}
+</g>
+<!-- Aire -->
+<path d="M1000 98 H1190" stroke="#2f7fc1" stroke-width="5" fill="none"/>
+<text x="1188" y="90" text-anchor="end" class="small" style="fill:#2f7fc1;font-weight:700">aire de instrumentos 6 bar</text>
+<path d="M1106 98 V222" stroke="#2f7fc1" stroke-width="3" fill="none"/>
+<path d="M1106 192 H1088" stroke="#2f7fc1" stroke-width="2" fill="none"/>
+<g class="info" data-info="PI-102">${gauge(1074,192,14,10,'aneedle','')}<text x="1074" y="216" text-anchor="middle" style="font-size:7.5px;font-weight:700">PI-102</text></g>
+<g class="pt" data-id="VA-1"><rect class="hit" x="1086" y="124" width="74" height="54" rx="5"/>
+ <polygon points="1099,141 1113,141 1106,150" fill="#3f4850"/><polygon points="1099,159 1113,159 1106,150" fill="#3f4850"/>
+ <circle cx="1106" cy="150" r="3" fill="#222"/>
+ <g id="val" class="mv" style="transform-origin:1106px 150px;transform:rotate(90deg)"><rect x="1106" y="147.5" width="22" height="5" rx="2.5" fill="#c62828"/></g>
+ <text x="1120" y="140" class="lbl" style="font-size:10.5px">VA-1</text>
+ <text id="vas" x="1120" y="170" class="vst open">ABIERTA</text>
+ ${lockG(1172,112)}
+</g>
+<g class="pt" data-id="V-2"><rect class="hit" x="1072" y="206" width="70" height="138" rx="5"/>
+ ${flangeH(1090,300)}${flangeH(1122,300)}
+ <polygon points="1092,287 1092,313 1106,300" fill="#3f4850"/><polygon points="1120,287 1120,313 1106,300" fill="#3f4850"/>
+ <g id="v2stem" class="mv"><rect x="1102" y="252" width="8" height="34" fill="#6b757e"/><rect x="1098" y="262" width="16" height="4" fill="#f2c230"/></g>
+ <path d="M1080 252 Q1106 212 1132 252 Z" fill="#2f6fa8" stroke="#1d4b73"/>
+ <rect x="1080" y="250" width="52" height="6" fill="#1d4b73"/>
+ <text x="1106" y="330" text-anchor="middle" class="lbl" style="font-size:10.5px">V-2</text>
+ <text id="v2s" x="1106" y="342" text-anchor="middle" class="vst open">ABIERTA</text>
+ ${lockG(1060,318)}
+</g>
+<text x="1188" y="284" text-anchor="end" class="small" style="font-weight:700">→ cabezal 6 bar</text>
+</svg>`;}
+
+const INFO={
+ 'S-101':['S-101 · Seccionador rotativo (gaveta 4)','Alimentación 380 V de P-101. La manilla acepta candado. I = conectado, O = desconectado.'],
+ 'S-102':['S-102 · Seccionador (gaveta 1)','Alimentación de la bomba P-102, otro equipo de la planta.'],
+ 'GM-101':['GM-101 · Guardamotor','Protección magnetotérmica del circuito del motor.'],
+ 'VM-101':['VM-101 · Voltímetro de gaveta','Tensión aguas abajo de S-101, a la entrada del variador.'],
+ 'VDF-101':['VDF-101 · Variador de frecuencia','Controla la velocidad de M-101. Tiene función STO y bus DC interno.'],
+ 'DCS':['DCS · Pantalla de operación de P-101','Parada y partida desde la sala. El modo mantención habilita el pulsador de prueba de partida, que se usa para verificar la energía cero eléctrica con el sistema bloqueado.'],
+ 'PB-101':['PB-101 · Botonera local','Partida (verde), parada (negro) y parada de emergencia (hongo rojo), junto al motor.'],
+ 'V-1':['V-1 · Válvula de compuerta (succión)','Manual, de volante, en la succión desde TK-100.'],
+ 'V-2':['V-2 · Válvula de descarga con actuador','On-off con actuador neumático comandado desde el DCS. Tiene volante de emergencia para operarla a mano.'],
+ 'V-5':['V-5 · Válvula de recirculación','Línea de recirculación mínima entre la descarga de la bomba y TK-100. Manual, de volante.'],
+ 'VA-1':['VA-1 · Válvula de bola de 3 vías (aire)','Alimenta aire al actuador de V-2. Al cerrarla, ventea el aire aguas abajo.'],
+ 'PI-102':['PI-102 · Manómetro de aire','Presión de aire en el actuador de V-2.'],
+ 'CV-1':['CV-1 · Válvula de retención','Evita el retorno desde el cabezal hacia la bomba. No tiene accionamiento.'],
+ 'V-3':['V-3 · Válvula de bola (drenaje)','Vacía la línea de descarga hacia el sumidero.'],
+ 'PSV-4':['PSV-4 · Válvula de alivio','Protege la línea contra sobrepresión y descarga a un lugar seguro.'],
+ 'TK-100':['TK-100 · Estanque de agua de proceso','Agua a 65 °C. Alimenta la succión de P-101 por gravedad.'],
+ 'P-101':['P-101 · Bomba centrífuga','Trabajo programado: cambio de sello mecánico, con apertura de la carcasa.'],
+ 'M-101':['M-101 · Motor eléctrico 380 V','Alimentado desde VDF-101. Caja de bornes en la parte superior.'],
+ 'PI-101':['PI-101 · Manómetro local','Presión en el tramo de descarga de la bomba.'],
+ 'TI-101':['TI-101 · Transmisor de temperatura de la línea','Temperatura del fluido y la carcasa en el tramo de la bomba. Criterio del ejercicio: APTO para intervenir con 40 °C o menos.']
+};
+
+// ---------- Modelo físico del equipo ----------
+const VALVES=['V-1','V-2','V-5','VA-1','V-3'];
+function newModel(){
+  return {s101:'I',s102:'I',gm:true,sto:false,maint:false,run:true,
+    v:{'V-1':true,'V-2':true,'V-5':true,'VA-1':true,'V-3':false},
+    locks:new Set(),p:6,pAir:6,dcT0:null,flashUntil:0,mmUntil:0,mmVal:'',coolT0:null,T:65,tT:Date.now(),
+    f:{loadSwitch:false,stop:null,measured:null,startTry:false,startedIso:false,drainHeader:false,s102:false,stoUsed:false,maintUsed:false,gmOff:false,seqElec:false,seqPurge:false}};
+}
+function physics(M){
+  if(!(M.s101==='I'&&M.gm&&!M.sto)) M.run=false;
+  const header=M.v['V-2'], tank=M.v['V-1']||M.v['V-5'];
+  let p;
+  // La presión solo se genera con la bomba en marcha; detenida, el tramo conserva la presión que tenía
+  if(M.run) p= M.v['V-3']?2:6;
+  else if(M.v['V-3']) p= (header||tank)?0.3:0;
+  else p=M.p;
+  if(M.p>0.5 && p<=0.3 && M.v['V-3']) M.flashUntil=Date.now()+2600;
+  M.p=p;
+  M.pAir=M.v['VA-1']?6:0;
+  M.drainCont=M.v['V-3']&&(header||tank||M.run);
+  const isoHyd=!M.v['V-1']&&!M.v['V-2']&&!M.v['V-5'];
+  if(isoHyd&&M.v['V-3']&&M.p===0){ if(M.coolT0===null) M.coolT0=Date.now(); } else if(!isoHyd) M.coolT0=null;
+  if(M.s101==='O'&&M.dcT0===null) M.dcT0=Date.now();
+  if(M.s101==='I') M.dcT0=null;
+}
+const COOL_MS=40000, T_OK=40;
+function temp(M){
+  if(M.Tfix!==undefined) return M.Tfix;
+  const now=Date.now(), dt=now-M.tT; M.tT=now;
+  const isoHyd=!M.v['V-1']&&!M.v['V-2']&&!M.v['V-5'];
+  if(M.run) M.T=Math.min(65,M.T+35*dt/15000);              // con la bomba en marcha vuelve a circular fluido caliente
+  else if(isoHyd&&M.v['V-3']&&M.p===0) M.T=Math.max(30,M.T-35*dt/COOL_MS); // aislado y drenado: se enfría
+  return M.T;                                              // en otro caso conserva su temperatura
+}
+function heatColor(T){const f=Math.min(1,Math.max(0,(65-T)/35)); const c=(a,b)=>Math.round(a+(b-a)*f); return `rgb(${c(255,63)},${c(122,143)},${c(26,224)})`;}
+function dcBus(M){ if(M.s101==='I') return 540; if(M.dcT0===null) return 0; return Math.max(0,Math.round(540*(1-(Date.now()-M.dcT0)/7000))); }
+function modelFromStage(st,locked){
+  const M=newModel();
+  if(st>=3) M.run=false;
+  const iso=st>=4&&st<9;
+  if(st>=4&&st<10){M.s101='O';M.dcT0=0;}
+  if(iso){['V-1','V-2','V-5','VA-1'].forEach(k=>M.v[k]=false);}
+  if(st>=6&&st<9) M.v['V-3']=true;
+  M.locks=new Set(locked? [...locked].filter(id=>id!=='V-3'||st>=6) : []);
+  physics(M);
+  if(st>=6&&st<10) M.p=0;
+  if(st===6) M.flashUntil=Date.now()+2600;
+  if(st>=10){M.s101='I';M.run=true;M.dcT0=null;physics(M);}
+  M.Tfix=(st>=7&&st<10)?30:65;
+  return M;
+}
+const fmt=x=>x.toFixed(1).replace('.',',');
+function stateLine(id,M){
+  const ab=b=>b?'ABIERTA':'CERRADA', lk=M.locks.has(id)?' · con candado':'';
+  switch(id){
+    case 'S-101': return 'Posición: '+(M.s101==='I'?'I (conectado)':'O (desconectado)')+lk;
+    case 'S-102': return 'Posición: '+(M.s102==='I'?'I (conectado)':'O (desconectado)')+lk;
+    case 'GM-101': return 'Estado: '+(M.gm?'ON':'OFF')+lk;
+    case 'VM-101': return 'Lectura: '+(M.s101==='I'?'380':'0')+' V';
+    case 'VDF-101': { const d=vdfText(M); return 'Display: '+(d||'apagado'); }
+    case 'DCS': return 'P-101: '+(M.run?'EN MARCHA':'DETENIDA')+(M.maint?' · modo mantención activo':'');
+    case 'PB-101': return M.locks.has(id)?'Con candado':'';
+    case 'CV-1': return M.locks.has(id)?'Con tarjeta colgada':'';
+    case 'PSV-4': return 'Estado: cerrada (presión bajo el ajuste)'+(M.locks.has(id)?' · con candado':'');
+    case 'M-101': return 'Estado: '+(M.run?'girando':'detenido');
+    case 'P-101': return 'Estado: '+(M.run?'en servicio':'detenida');
+    case 'PI-101': return 'Lectura: '+fmt(M.p)+' bar';
+    case 'PI-102': return 'Lectura: '+fmt(M.pAir)+' bar';
+    case 'TK-100': return 'Nivel: normal';
+    case 'TI-101': { const T=temp(M); return 'Lectura: '+Math.round(T)+' °C'+(T<=T_OK?' · apta para intervenir':' · aún caliente'); }
+    default: return VALVES.includes(id)?'Posición: '+ab(M.v[id])+lk:'';
+  }
+}
+function vdfText(M){
+  if(M.run) return '50.0 Hz';
+  if(M.s101==='I') return M.sto?'STO':'0.0 Hz';
+  const dc=dcBus(M); return dc>0?'DC '+dc+' V':'';
+}
+function applyModel(svg,M){
+  if(!svg||!M) return;
+  const now=Date.now();
+  svg.classList.toggle('run',M.run);
+  svg.classList.toggle('energized',M.s101==='I');
+  svg.classList.toggle('draining',!!(M.drainCont||M.flashUntil>now));
+  // Estado explícito en cada elemento animado (evita que algunos navegadores móviles, como Safari en iPhone, conserven animaciones antiguas)
+  const dr=!!(M.drainCont||M.flashUntil>now), en=M.s101==='I';
+  svg.querySelectorAll('.flow.main').forEach(e=>{e.style.opacity=M.run?.95:0; e.style.animationPlayState=M.run?'running':'paused';});
+  svg.querySelectorAll('.flow.drain').forEach(e=>{e.style.opacity=dr?.95:0; e.style.animationPlayState=dr?'running':'paused';});
+  svg.querySelectorAll('.drip').forEach(e=>{e.style.opacity=dr?1:0; e.style.animation=dr?'drip 1s linear infinite':'none';});
+  svg.querySelectorAll('.rot').forEach(e=>{e.style.animation=M.run?'spin .35s linear infinite':'none';});
+  svg.querySelectorAll('.cableglow').forEach(e=>{e.style.opacity=M.run?.9:0; e.style.animationPlayState=M.run?'running':'paused';});
+  svg.querySelectorAll('.cable').forEach(e=>{e.style.stroke=en?'#ff9a1a':'#59616a';});
+  const q=s=>svg.querySelector(s);
+  q('#s101h').style.transform= M.s101==='I'?'rotate(0deg)':'rotate(-90deg)';
+  q('#s102h').style.transform= M.s102==='I'?'rotate(0deg)':'rotate(-90deg)';
+  q('#p102led').setAttribute('fill',M.s102==='I'?'#7fd36b':'#e05a4a');
+  q('#gmind').setAttribute('fill',M.gm?'#1f8a4c':'#c0392b'); q('#gmtxt').textContent=M.gm?'ON':'OFF';
+  q('#vneedle').style.transform='rotate('+(-120+(M.s101==='I'?380:0)/500*240)+'deg)';
+  q('#vdfd').textContent=vdfText(M);
+  q('#stoled').setAttribute('fill',M.sto?'#f2a516':'#666');
+  const d=q('#dcsst'); d.textContent='ESTADO: '+(M.run?'EN MARCHA':'DETENIDA')+(M.maint?' · MANT.':'');
+  d.setAttribute('class','scrtxt'+(M.run?'':' stop'));
+  q('#dcsp').textContent='PI-101: '+fmt(M.p)+' bar · FI: '+(M.run?'85':'0')+' m3/h';
+  q('#dcsl1').textContent=M.dcsMsg||'P-101 · AGUA DE PROCESO';
+  q('#dcsmaint').setAttribute('fill',M.maint?'#b26a00':'#24435c'); q('#dcstest').style.opacity=M.maint?1:.25;
+  const setV=(id,open)=>{const t=q(id);t.textContent=open?'ABIERTA':'CERRADA';t.setAttribute('class','vst '+(open?'open':'closed'));};
+  setV('#v1s',M.v['V-1']); setV('#v2s',M.v['V-2']); setV('#v5s',M.v['V-5']); setV('#vas',M.v['VA-1']); setV('#v3s',M.v['V-3']);
+  q('#v1w').style.transform= M.v['V-1']?'translateX(0)':'translateX(-12px)';
+  q('#v5w').style.transform= M.v['V-5']?'translateX(0)':'translateX(-10px)';
+  q('#v2stem').style.transform= M.v['V-2']?'translateY(0)':'translateY(8px)';
+  q('#val').style.transform= M.v['VA-1']?'rotate(90deg)':'rotate(0deg)';
+  q('#v3l').style.transform= M.v['V-3']?'rotate(90deg)':'rotate(0deg)';
+  q('#needle').style.transform='rotate('+(-120+Math.min(10,M.p)*24)+'deg)';
+  q('#aneedle').style.transform='rotate('+(-120+M.pAir*24)+'deg)';
+  const T=temp(M), hc=heatColor(T); svg.querySelectorAll('.heat').forEach(r=>r.style.fill=hc);
+  const okT=T<=T_OK; q('#titxt').textContent=Math.round(T)+' °C'; q('#titxt').style.fill=okT?'#8fd0ff':'#ffb36b';
+  q('#tibox').setAttribute('stroke',okT?'#1f8a4c':'#ff7a1a'); q('#tistb').setAttribute('fill',okT?'#1f8a4c':'#c0392b'); q('#tist').textContent=okT?'APTO':'NO INTERVENIR';
+  const iv=q('#intv'); if(M.intervene){ iv.style.display='block'; q('#intvbg').setAttribute('fill',M.intervene.ok?'#1f8a4c':'#c0392b'); q('#intvtxt').textContent=M.intervene.ok?'🔧 CAMBIO DE SELLO EN CURSO':'⚠ INTERVENCIÓN EN CONDICIÓN INSEGURA'; } else iv.style.display='none';
+  const mm=q('#mm'); mm.classList.toggle('on',M.mmUntil>now); q('#mmtxt').textContent=M.mmVal;
+  svg.querySelectorAll('.pt').forEach(g=>{
+    const id=g.dataset.id, L=M.locks.has(id);
+    g.classList.toggle('locked',L);
+    if(L){const open=VALVES.includes(id)&&M.v[id];
+      const t1=g.querySelector('.lk .t1'),t2=g.querySelector('.lk .t2');
+      if(t1){t1.textContent=open?'BLOQ.':'NO'; t2.textContent=open?'ABIERTA':'OPERAR';}}
+  });
+}
+
+// ---------- Montaje del diagrama ----------
+let mountN=0;
+const ZONES=[['full','Vista completa',[0,0,1200,640]],['elec','Sala eléctrica',[14,14,322,372]],['ctrl','Sala de control',[14,398,322,228]],['pump','Estanque y bomba',[348,14,540,612]],['disc','Descarga y aire',[630,70,560,540]]];
+const isNarrow=()=>window.matchMedia('(max-width: 760px)').matches;
+function diagramHTML(){
+  return `<div class="ztabs">${ZONES.map(z=>`<button type="button" data-zone="${z[0]}">${z[1]}</button>`).join('')}</div><div class="rot-hint">Sugerencia: gira el teléfono a horizontal para ver más del diagrama.</div><div class="dwrap"><div class="dctl"><button type="button" data-z="in" title="Acercar">+</button><button type="button" data-z="out" title="Alejar">−</button><button type="button" data-z="reset" title="Vista completa">⟲</button></div>${sceneSVG()}<div class="tip"></div><div class="menu"></div></div>
+  <div class="legend"><span><i style="background:#3fa2ff"></i>fluido en movimiento</span><span><i style="background:#ff9a1a"></i>cable energizado</span><span>🔒 candado y tarjeta</span><span>Toca un equipo para ver su información u operarlo · usa las pestañas para ir a cada zona · arrastra para desplazar · + / − para acercar</span></div>`;
+}
+// opts: {mode:'view'|'select'|'operate', getModel, onPick, menuFor}
+function mountDiagram(container,opts){
+  opts=opts||{};
+  const uid='d'+(++mountN);
+  container.innerHTML=diagramHTML().replace(/(id="|url\(#)(gH|gV|gMotor|gPump|gTank|gCab|gWater|grate|hatch|sh)(?=["\)])/g,'$1$2_'+uid);
+  const wrap=container.querySelector('.dwrap'), svg=wrap.querySelector('svg'), tip=wrap.querySelector('.tip'), menu=wrap.querySelector('.menu');
+  if(opts.mode==='select') svg.classList.add('selectable');
+  if(opts.mode==='operate') svg.classList.add('operable');
+  let vb=[0,0,1200,640]; const setVB=()=>svg.setAttribute('viewBox',vb.join(' '));
+  const tabs=container.querySelectorAll('.ztabs button');
+  const repaint=()=>{ if(opts.getModel) applyModel(svg,opts.getModel()); svg.style.display='none'; void svg.getBoundingClientRect(); svg.style.display=''; };
+  const goZone=k=>{const z=ZONES.find(x=>x[0]===k)||ZONES[0]; vb=z[2].slice(); setVB(); repaint(); tabs.forEach(b=>b.classList.toggle('on',b.dataset.zone===z[0])); menu.style.display='none'; tip.style.display='none';};
+  tabs.forEach(b=>b.addEventListener('click',()=>goZone(b.dataset.zone)));
+  const clamp=()=>{vb[0]=Math.max(0,Math.min(1200-vb[2],vb[0])); vb[1]=Math.max(0,Math.min(640-vb[3],vb[1]));};
+  const zoom=f=>{const cx=vb[0]+vb[2]/2, cy=vb[1]+vb[3]/2; const w=Math.min(1200,Math.max(220,vb[2]*f)), r=w/vb[2]; vb[2]=w; vb[3]=Math.min(640,vb[3]*r); vb[0]=cx-vb[2]/2; vb[1]=cy-vb[3]/2; clamp(); setVB(); repaint(); tabs.forEach(b=>b.classList.remove('on'));};
+  wrap.querySelectorAll('.dctl button').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();const z=b.dataset.z; if(z==='in')zoom(.75); else if(z==='out')zoom(1/.75); else goZone('full');}));
+  let drag=null, moved=false;
+  svg.addEventListener('pointerdown',e=>{drag={x:e.clientX,y:e.clientY,vb:vb.slice()};moved=false;});
+  svg.addEventListener('pointermove',e=>{
+    if(drag){const r=svg.getBoundingClientRect(), dx=(e.clientX-drag.x)*vb[2]/r.width, dy=(e.clientY-drag.y)*vb[3]/r.height;
+      if(Math.abs(e.clientX-drag.x)+Math.abs(e.clientY-drag.y)>6){moved=true;wrap.classList.add('drag');}
+      if(moved){vb[0]=drag.vb[0]-dx; vb[1]=drag.vb[1]-dy; clamp(); setVB(); tip.style.display='none'; menu.style.display='none';}}
+  });
+  const end=()=>{ if(drag&&moved) repaint(); drag=null;wrap.classList.remove('drag');};
+  svg.addEventListener('pointerup',end); svg.addEventListener('pointerleave',()=>{end();tip.style.display='none';});
+  const place=(el,e,w,h)=>{const r=wrap.getBoundingClientRect(); let x=e.clientX-r.left+12, y=e.clientY-r.top+12;
+    if(x+w>r.width) x=Math.max(4,e.clientX-r.left-w-12); if(y+h>r.height) y=Math.max(4,r.height-h-6);
+    el.style.left=x+'px'; el.style.top=y+'px';};
+  const showTip=(el,e)=>{
+    if(menu.style.display==='block') return;
+    const id=el.dataset.id||el.dataset.info, inf=INFO[id]; if(!inf) return;
+    const M=opts.getModel?opts.getModel():null, line=M?stateLine(id,M):'';
+    tip.innerHTML=`<b>${inf[0]}</b>${inf[1]}${line?`<span class="st">${line}</span>`:''}`;
+    tip.style.display='block'; place(tip,e,270,120);
+  };
+  svg.querySelectorAll('.pt,.info,.act').forEach(el=>{
+    el.addEventListener('pointermove',e=>{ if(!moved) showTip(el,e); });
+    el.addEventListener('pointerleave',()=>{tip.style.display='none';});
+    el.addEventListener('click',e=>{
+      if(moved) return; e.stopPropagation();
+      const id=el.dataset.id||el.dataset.info;
+      if(opts.mode==='select' && el.classList.contains('pt') && opts.onPick){ opts.onPick(id); showTip(el,e); return; }
+      const cmdEl=e.target.closest&&e.target.closest('[data-cmd]');
+      if(opts.mode==='operate' && cmdEl && opts.onCmd){ tip.style.display='none'; menu.style.display='none'; opts.onCmd(cmdEl.dataset.cmd); return; }
+      if(opts.mode==='operate' && opts.menuFor && (el.classList.contains('pt')||el.classList.contains('act'))){
+        const items=opts.menuFor(id); if(!items||!items.length){showTip(el,e);return;}
+        tip.style.display='none';
+        const M=opts.getModel(), line=stateLine(id,M);
+        menu.innerHTML=`<div class="mh">${INFO[id]?INFO[id][0]:id}${line?`<span class="ms">${line}</span>`:''}</div>`+
+          items.map((it,i)=>`<button type="button" class="${it.lock?'lockb':''}" data-i="${i}">${it.label}</button>`).join('')+
+          `<button type="button" class="close" data-i="x">Cerrar</button>`;
+        menu.style.display='block'; place(menu,e,280,60+items.length*38);
+        menu.querySelectorAll('button').forEach(b=>b.addEventListener('click',ev=>{ev.stopPropagation();menu.style.display='none';
+          if(b.dataset.i!=='x') items[+b.dataset.i].run();}));
+        return;
+      }
+      showTip(el,e);
+    });
+  });
+  wrap.addEventListener('click',()=>{menu.style.display='none';});
+  goZone(opts.zone|| (isNarrow()? (opts.mode==='operate'?'ctrl':(opts.mode==='select'?'pump':'full')) : 'full'));
+  if(opts.getModel) applyModel(svg,opts.getModel());
+  return svg;
+}
+
+const app=document.getElementById('app');
+function hideChrome(){
+  ['toolbar','dDiag','dFicha'].forEach(id=>document.getElementById(id).style.display='none');
+  document.getElementById('diagHolder').innerHTML='';
+}
+let TICK=null;
+function stopTick(){ if(TICK){clearInterval(TICK);TICK=null;} }
+
+// ================= INICIO =================
+function home(){
+  stopTick(); hideChrome(); P=null;
+  app.innerHTML=`
+  <div class="card">
+    <span class="tag">Escenario</span>
+    <h2>Cambio de sello mecánico · Bomba P-101</h2>
+    <p class="ctx">Planta de proceso ficticia. P-101 bombea agua de proceso a 65 °C desde el estanque TK-100 hacia un cabezal presurizado (6 bar). El motor M-101 (380 V) se alimenta desde la gaveta 4 del CCM-2 a través de un variador de frecuencia. La válvula de descarga V-2 tiene actuador neumático comandado desde el DCS. EQUANS actúa como ESE y ejecuta el trabajo.</p>
+    <ul class="tight">
+      <li><b>Trabajo:</b> cambio de sello mecánico, con apertura de la carcasa.</li>
+      <li><b>Cuadrilla EQUANS:</b> Pedro (responsable de bloqueo), Ana y Jorge (mecánicos autorizados) y Sergio (verificador eléctrico).</li>
+      <li><b>Cliente:</b> el jefe de turno de operaciones es el dueño del área.</li>
+    </ul>
+    <div class="modes">
+      <div class="mode"><h3>1 · Maniobra en terreno</h3><p>Operas directamente los dispositivos en la vista: detienes la bomba, giras seccionadores, cierras y abres válvulas, instalas candados, mides tensión y haces el intento de arranque. Los instrumentos responden a cada maniobra. Hay dispositivos trampa.</p><button class="primary" onclick="practiceStart()">Iniciar maniobra</button></div>
+      <div class="mode"><h3>2 · Ejercicio de decisiones</h3><p>Recorres los 10 pasos de la secuencia operacional respondiendo preguntas, con 3 eventos al azar durante la ejecución (colación, cambio de cuadrilla, pruebas, señal de energía).</p><button class="primary" onclick="guidedStart()">Iniciar ejercicio</button></div>
+    </div>
+    <h3>Vista del equipo</h3>
+    <div id="introDiag"></div>
+  </div>`;
+  const M=newModel();
+  mountDiagram(document.getElementById('introDiag'),{mode:'view',getModel:()=>M});
+}
+
+// ================= MODO 1: MANIOBRA =================
+let P=null;
+function practiceStart(){
+  stopTick(); hideChrome();
+  P={M:newModel(),log:[],t0:Date.now()};
+  document.getElementById('dFicha').style.display='block';
+  document.getElementById('fichaHolder').innerHTML=FICHA;
+  app.innerHTML=`<div class="card">
+    <span class="tag">Maniobra en terreno</span>
+    <h2>Deja P-101 en energía cero para cambiar el sello</h2>
+    <p class="ctx">Toca cada dispositivo para ver qué acciones permite. Deja la bomba en energía cero: aísla y bloquea, libera la presión, espera que la temperatura baje y comprueba la energía cero. Revisa la ficha y recorre el equipo: <b>terreno y ficha pueden no coincidir</b>, y algunos dispositivos son trampas. Cuando creas que el equipo está en condición segura, usa la decisión de intervención.</p>
+    <div class="stickybar"><div class="chips" id="chips"></div><div class="msg" id="pmsg">P-101 en servicio. Empieza cuando quieras.</div></div>
+    <div id="pdg"></div>
+    <div class="mdec"><b>Decisión de intervención</b><div class="btns" style="margin-top:6px"><button class="primary" style="background:#1f8a4c" onclick="practiceDecide(true)">✅ Intervenir</button><button class="primary" style="background:#8a2a1f" onclick="practiceDecide(false)">⛔ No intervenir todavía</button></div></div>
+    <div class="btns"><button class="ghost" onclick="practiceStart()">Reiniciar</button><button class="ghost" onclick="home()">Volver al inicio</button></div>
+    <h3>Registro de maniobras</h3><div class="log" id="plog"><div><span>—</span>Sin maniobras aún.</div></div>
+    <div id="peval"></div>
+  </div>`;
+  P.svg=mountDiagram(document.getElementById('pdg'),{mode:'operate',getModel:()=>P.M,menuFor,onCmd:dcsCmd});
+  renderP();
+  TICK=setInterval(()=>{ if(P) {milestones(); applyModel(P.svg,P.M); chips();} },500);
+}
+function say(t,cls){const m=document.getElementById('pmsg'); if(m){m.innerHTML=t; m.className='msg'+(cls?' '+cls:'');}}
+function log(t){
+  const s=Math.round((Date.now()-P.t0)/1000), mm=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+  P.log.push([mm,t]);
+  const el=document.getElementById('plog'); if(el){el.innerHTML=P.log.map(x=>`<div><span>${x[0]}</span>${x[1]}</div>`).join(''); el.scrollTop=el.scrollHeight;}
+}
+function chips(){
+  const M=P.M, el=document.getElementById('chips'); if(!el) return;
+  const c=(lbl,val,hot)=>`<div class="chip ${hot?'hot':'safe'}">${lbl}: <b>${val}</b></div>`;
+  el.innerHTML=c('P-101',M.run?'EN MARCHA':'DETENIDA',M.run)+c('VM-101 gaveta 4',(M.s101==='I'?'380':'0')+' V',M.s101==='I')+
+    c('PI-101',fmt(M.p)+' bar',M.p>0)+c('PI-102 aire',fmt(M.pAir)+' bar',M.pAir>0)+
+    c('TI-101',Math.round(temp(M))+' °C'+(M.run?' · en servicio':(temp(M)<=T_OK?' · intervención habilitada':' · esperar enfriamiento')),temp(M)>T_OK)+
+    `<div class="chip">Candados y tarjetas: <b>${M.locks.size}</b></div>`;
+}
+function stamp(){ const s=Math.round((Date.now()-P.t0)/1000); return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0'); }
+function milestones(){
+  const M=P.M, ms=M.ms||(M.ms={}), set=(k,c)=>{ if(c&&!ms[k]) ms[k]={t:Date.now(),s:stamp()}; };
+  set('stop',!M.run&&!!M.f.stop); set('elec',elecLocked(M)); set('main',mainLocked(M));
+  set('purge',M.v['V-3']&&M.locks.has('V-3')&&M.p===0); set('test',!!M.f.startTry); set('temp',temp(M)<=T_OK&&!!ms.purge);
+}
+function renderP(){ physics(P.M); milestones(); applyModel(P.svg,P.M); chips(); }
+const NAME=id=>id;
+function menuFor(id){
+  const M=P.M, L=M.locks.has(id);
+  const lockItem={lock:true,label:L?'🔓 Retirar candado y tarjeta':'🔒 Instalar candado y tarjeta',run:()=>toggleLock(id)};
+  const pos=(label,fn)=>({label,run:()=>{ if(L){say(`<b>${id}</b> tiene candado y tarjeta: primero usa «Retirar candado y tarjeta» y luego vuelve a tocar el dispositivo para operarlo.`,'warn');return;} fn(); renderP(); }});
+  switch(id){
+    case 'S-101': {
+      const turn=to=>{ if(to==='O'){ const r=M.run; if(r) M.f.loadSwitch=true; M.s101='O';
+          log('S-101 girado a O.'+(r?' P-101 se detiene y el fluido deja de circular; PI-101 sigue en '+fmt(M.p)+' bar.':'')+' VM-101 baja a 0 V.');
+          say('S-101 en O: '+(r?'la bomba y el fluido se detienen, pero <b>la presión del sistema no baja</b> (PI-101 en '+fmt(M.p)+' bar). <b>Ojo:</b> abriste S-101 bajo carga, sin detener antes desde la sala. ':'')+'VM-101 marca 0 V.',r?'warn':'good'); }
+        else { M.s101='I'; log('S-101 girado a I (circuito energizado).'); say('S-101 en I: el circuito de P-101 está energizado.','warn'); } };
+      if(L) return [lockItem, pos(M.s101==='I'?'Girar selector a O (abrir)':'Girar selector a I (cerrar) · requiere retirar el candado',()=>{})];
+      return [pos(M.s101==='I'?'Girar selector a O (abrir)':'Girar selector a I (cerrar)',()=>turn(M.s101==='I'?'O':'I')),
+        {lock:true,label:'🔒 Bloquear en posición O',run:()=>{ if(M.s101==='I'){turn('O'); renderP();} setTimeout(()=>{ if(!P) return; M.locks.add('S-101'); log('Candado y tarjeta instalados en S-101 en posición O.'); say('S-101 bloqueado en O. Sigue con las válvulas de la línea principal.','good'); renderP(); },900); }}];
+    }
+    case 'S-102': return [pos(M.s102==='I'?'Girar manilla a O (desconectar)':'Girar manilla a I (conectar)',()=>{
+        M.s102=M.s102==='I'?'O':'I'; M.f.s102=true; log('S-102 (gaveta 1, P-102) girado a '+M.s102+'.');
+        say('Ojo: S-102 alimenta a <b>P-102</b>, otro equipo. '+(M.s102==='O'?'P-102 se detuvo y P-101 sigue igual.':''),'bad');
+      }),lockItem];
+    case 'GM-101': return [pos(M.gm?'Desconectar guardamotor (OFF)':'Conectar guardamotor (ON)',()=>{
+        M.gm=!M.gm; if(!M.gm){M.f.gmOff=true; if(M.run&&!M.f.stop) M.f.stop='gm';}
+        log('GM-101 en '+(M.gm?'ON':'OFF')+'.'); say(M.gm?'Guardamotor conectado.':'Guardamotor en OFF: el motor queda sin mando, pero VM-101 sigue marcando 380 V aguas arriba.','warn');
+      }),lockItem];
+    case 'VDF-101': return [pos(M.sto?'Desactivar STO':'Activar STO (parada segura por software)',()=>{
+        M.sto=!M.sto; if(M.sto){M.f.stoUsed=true; if(M.run&&!M.f.stop) M.f.stop='sto';}
+        log('VDF-101: STO '+(M.sto?'activado':'desactivado')+'.'); say(M.sto?'STO activo: el variador no entrega potencia, pero el circuito sigue energizado (VM-101 en 380 V).':'STO desactivado.','warn');
+      })];
+    case 'DCS': return [];
+    case 'PB-101': return [
+      pos('Parada local (O)',()=>{ if(M.run){M.run=false; if(!M.f.stop) M.f.stop='local'; log('Parada local desde PB-101.'); say('P-101 detenida desde la botonera local. La detención se hace desde la sala.','warn');} else { M.f.pbZero=true; log('PB-101 en parada (O): mando local dejado en cero.'); say('Mando local PB-101 en cero (parada). Correcto como condición previa a intervenir.','good'); } }),
+      pos('Parada de emergencia',()=>{ const r=M.run; M.run=false; if(r&&!M.f.stop) M.f.stop='emerg'; log('Parada de emergencia en PB-101.'); say(r?'P-101 detenida con parada de emergencia: no es la detención normal.':'P-101 ya estaba detenida.','warn'); }),
+      lockItem];
+    case 'CV-1': return [{lock:true,label:L?'Retirar tarjeta':'Colgar tarjeta de bloqueo (no tiene accionamiento)',run:()=>toggleLock(id)}];
+    case 'PSV-4': return [{lock:true,label:L?'🔓 Retirar candado':'🔒 Instalar candado / mordaza en la válvula de alivio',run:()=>toggleLock(id)}];
+    case 'M-101': return [{label:'Abrir caja de conexiones y medir en bornes',run:()=>{
+        const live=M.s101==='I'; M.mmVal=live?'380 V':'0 V'; M.mmUntil=Date.now()+5000; M.f.measured=true;
+        log('Medición en bornes de M-101: detector probado en fuente conocida → '+M.mmVal+' → detector probado nuevamente.');
+        say((live?'<b>Tensión presente en bornes (380 V).</b> El circuito no está aislado. ':'Lectura: <b>0 V</b>. ')+'Esta medición no aplica al cambio de sello: no hay intervención eléctrica, y abrir la caja de conexiones agrega exposición. La verificación eléctrica es la prueba de partida desde el DCS.', live?'bad':'warn');
+        renderP(); setTimeout(()=>P&&renderP(),5100);
+      }}];
+  }
+  if(VALVES.includes(id)){
+    const open=M.v[id];
+    if(L) return [lockItem, pos((open?'Cerrar':'Abrir')+' · requiere retirar el candado',()=>{})];
+    return [
+      {lock:true,label:'🔒 Bloquear en posición CERRADA',run:()=>lockValve(id,false)},
+      {lock:true,label:'🔒 Bloquear en posición ABIERTA',run:()=>lockValve(id,true)},
+      pos(open?(id==='VA-1'?'Solo cerrar, sin bloquear (ventea el aire)':'Solo cerrar, sin bloquear'):'Solo abrir, sin bloquear',()=>setValve(id,!open))];
+  }
+  return [];
+}
+const MAIN=['V-1','V-2','V-5','VA-1'];
+function elecLocked(M){return M.s101==='O'&&M.locks.has('S-101');}
+function mainLocked(M){return MAIN.every(k=>!M.v[k]&&M.locks.has(k));}
+function setValve(id,open){
+  const M=P.M, was=M.v[id]; if(was===open) return;
+  if(id==='V-3'&&open&&!mainLocked(M)&&!M.f.seqPurge){M.f.seqPurge=true;}
+  if(id==='V-2'&&!open&&!(!M.v['VA-1']&&M.locks.has('VA-1'))) M.f.seqAir=true;
+  M.v[id]=open;
+  if(!open && M.run && (id==='V-1'||id==='V-2')) M.f.closedRunning=true;
+  if(open && id==='V-3' && M.v['V-2']) M.f.drainHeader=true;
+  const prevP=M.p; physics(M);
+  let t=`${id} ${open?'abierta':'cerrada'}.`;
+  if(id==='VA-1'&&!open) t+=' PI-102 baja a 0 bar (aire venteado).';
+  if(id==='V-3'&&open) t+= M.drainCont?' El drenaje descarga en forma continua.':(prevP>0.3?` Se libera el fluido presurizado: PI-101 baja de ${fmt(prevP)} a ${fmt(M.p)} bar.`:'');
+  if(id==='V-3'&&!open&&M.p>0) t+=` PI-101 sube a ${fmt(M.p)} bar.`;
+  log(t);
+  if(id==='V-3'&&open&&M.v['V-2']) say('La purga está descargando el <b>cabezal</b> al sumidero: V-2 sigue abierta.','bad');
+  else if(id==='V-3'&&open&&M.drainCont) say('La purga no deja de descargar: todavía entra fluido al tramo. Revisa qué camino sigue abierto.','warn');
+  else if(id==='V-3'&&open&&M.f.seqPurge&&!mainLocked(M)) say(t+' <b>Secuencia:</b> la purga se abre después de bloquear cerradas las válvulas de la línea principal.','warn');
+  else if(!open&&M.run&&(id==='V-1'||id==='V-2')) say(`Cerraste ${id} con la bomba en marcha.`,'warn');
+  else say(t,(id==='V-3'&&open)?'good':'');
+  renderP(); setTimeout(()=>P&&renderP(),2700);
+}
+function lockValve(id,open){
+  const M=P.M;
+  if(MAIN.includes(id)&&!elecLocked(M)&&!M.f.seqElec){M.f.seqElec=true;}
+  if(id==='V-3'&&!mainLocked(M)) M.f.seqPurge=true;
+  const airFirst = id==='V-2'&&!open&&!(!M.v['VA-1']&&M.locks.has('VA-1')); if(airFirst) M.f.seqAir=true;
+  const seqMsg = (MAIN.includes(id)&&!elecLocked(M)) ? ' <b>Secuencia:</b> primero se bloquea el interruptor eléctrico.' : airFirst ? ' <b>Secuencia:</b> primero se cierra y bloquea VA-1 (aire del actuador), luego V-2.' : (false) ? ' <b>Secuencia:</b> primero se bloquea el interruptor eléctrico.' : (id==='V-3'&&!mainLocked(M)) ? ' <b>Secuencia:</b> primero se bloquean cerradas las válvulas de la línea principal.' : '';
+  setValve(id,open);
+  const after=()=>{ if(!P) return; M.locks.add(id);
+    log(`Candado y tarjeta instalados en ${id} en posición ${open?'ABIERTA':'CERRADA'}.`);
+    const extra=(id==='V-3'&&open&&M.p===0)?' Presión liberada: PI-101 en 0 bar. Espera que TI-101 baje antes de intervenir.':'';
+    say(`${id} bloqueada en posición ${open?'ABIERTA':'CERRADA'}.`+extra+seqMsg, seqMsg?'warn':'good'); renderP(); };
+  setTimeout(after, M.v[id]===open?900:300);
+}
+function dcsCmd(cmd){
+  const M=P.M, ok=(t,c)=>{M.dcsMsg='> '+t; say(c[0],c[1]); renderP();};
+  if(cmd==='go'||cmd==='nogo'){ practiceDecide(cmd==='go'); return; }
+  if(cmd==='parada'){
+    if(M.run){M.run=false; if(!M.f.stop) M.f.stop='dcs'; log('DCS · PARADA: P-101 detenida desde la sala.'); ok('PARADA EJECUTADA',['<b>PARADA:</b> P-101 detenida en condición normal. El fluido deja de circular; la presión del sistema se mantiene.','good']);}
+    else ok('P-101 YA DETENIDA',['<b>PARADA:</b> P-101 ya está detenida.','']);
+  } else if(cmd==='partir'){
+    if(M.maint) ok('PARTIDA INHIBIDA (MANT.)',['<b>PARTIR:</b> inhibido. El modo mantención está activo.','warn']);
+    else if(M.run) ok('P-101 YA EN MARCHA',['<b>PARTIR:</b> P-101 ya está en marcha.','']);
+    else { tryStart('DCS'); M.dcsMsg='> '+(M.run?'P-101 EN MARCHA':'PARTIDA SIN RESPUESTA'); renderP(); }
+  } else if(cmd==='mant'){
+    M.maint=!M.maint;
+    if(M.maint){ M.f.maintUsed=true;
+      if(M.run){ M.run=false; if(!M.f.stop) M.f.stop='maint'; log('DCS · MODO MANTENCIÓN activado con P-101 en marcha: el sistema se detiene fuera de la condición normal.');
+        ok('MANT. · PARADA NO NORMAL',['<b>MODO MANTENCIÓN activado.</b> P-101 se detuvo, pero <b>no en condición normal</b>: la detención se hace con el pulsador PARADA. Queda registrado y puedes continuar.','warn']); }
+      else { log('DCS · MODO MANTENCIÓN activado: prueba de partida habilitada.'); ok('MODO MANTENCIÓN ACTIVO',['<b>MODO MANTENCIÓN activo:</b> prueba de partida habilitada; partida normal inhibida.','good']); }
+    } else { log('DCS · MODO MANTENCIÓN desactivado.'); ok('MODO NORMAL',['<b>MODO MANTENCIÓN desactivado.</b>','']); }
+  } else if(cmd==='prueba'){
+    if(!M.maint){ ok('PRUEBA NO HABILITADA',['<b>PRUEBA DE PARTIDA:</b> no habilitada. Activa primero el modo mantención.','warn']); return; }
+    testStart(); M.dcsMsg='> PRUEBA: '+(M.run?'P-101 ARRANCÓ':'SIN PARTIDA'); renderP();
+  }
+}
+function testStart(){
+  const M=P.M;
+  if(M.s101==='I'&&M.gm&&!M.sto){
+    M.run=true; M.f.testFail=true; log('Prueba de partida desde el DCS: <b>P-101 arrancó</b>. Hay energía eléctrica.');
+    say('<b>P-101 arrancó con la prueba de partida.</b> El sistema no está aislado eléctricamente.','bad');
+  } else {
+    const purged=M.v['V-3']&&M.locks.has('V-3')&&M.p===0&&mainLocked(M), ok=elecLocked(M)&&purged; if(ok) M.f.startTry=true;
+    if(elecLocked(M)&&!purged){ log('Prueba de partida desde el DCS fuera de secuencia: P-101 no parte, pero la purga aún no está bloqueada abierta. No se considera válida.'); say('Prueba de partida: P-101 no parte, pero <b>está fuera de secuencia</b>. La prueba se hace después de bloquear la línea y liberar la presión con la purga; repítela entonces.','warn'); return; }
+    const why=M.s101==='O'?'S-101 en O':(M.sto?'STO activo':'guardamotor en OFF');
+    log(`Prueba de partida desde el DCS: P-101 no parte (${why}).`+(ok?' Verificación de energía cero eléctrica conforme.':''));
+    say(`Prueba de partida: <b>P-101 no parte</b> (${why}).`+(ok?' Verificación conforme.':(M.s101==='O'?' Falta el candado en S-101 para que la prueba sea válida.':' Ojo: el circuito sigue energizado.')), ok?'good':'warn');
+  }
+}
+function tryStart(src){
+  const M=P.M;
+  if(M.s101==='I'&&M.gm&&!M.sto){
+    if(M.run){say('P-101 ya está en marcha.');return;}
+    M.run=true; log(`Partida desde ${src}: <b>P-101 arrancó</b>.`);
+    const bad=[]; if(!M.v['V-1']) bad.push('V-1 cerrada'); if(!M.v['V-2']) bad.push('V-2 cerrada'); if(M.v['V-3']) bad.push('purga V-3 abierta'); if(!M.v['VA-1']) bad.push('sin aire en V-2');
+    if(bad.length&&M.locks.size===0){ log('Partida con la línea mal restituida: '+bad.join(', ')+'.'); say('<b>P-101 arrancó</b>, pero la línea no está restituida: '+bad.join(', ')+'.','warn'); return; }
+    if(M.locks.size===0&&!bad.length){ say('<b>P-101 en marcha.</b> La presión sube a 6 bar y el fluido vuelve a circular.','good'); return; }
+    say(`<b>P-101 arrancó</b> desde ${src}.`+(M.locks.size?' Había candados instalados, pero la energía eléctrica no estaba aislada.':''),'bad');
+  } else {
+    const why=M.s101==='O'?'S-101 en O':(M.sto?'STO activo':'guardamotor en OFF');
+    if(src==='PB-101'&&M.s101==='O') M.f.startTry=true;
+    log(`Intento de arranque desde ${src}: P-101 no parte (${why}). Mando devuelto a OFF.`);
+    say(`Intento de arranque desde ${src}: <b>P-101 no parte</b> (${why}).`+(M.s101!=='O'?' Ojo: el circuito sigue energizado.':''), M.s101==='O'?'good':'warn');
+  }
+}
+function toggleLock(id){
+  const M=P.M;
+  if(M.locks.has(id)){M.locks.delete(id); M.intervene=null; log(`Candado/tarjeta retirado de ${id}.`); say(`Retiraste el candado de ${id}.`);}
+  else {M.locks.add(id);
+    const posTxt= VALVES.includes(id)?(M.v[id]?' en posición ABIERTA':' en posición CERRADA'):(id==='S-101'||id==='S-102')?(' en posición '+(id==='S-101'?M.s101:M.s102)):'';
+    log(`Candado y tarjeta instalados en ${id}${posTxt}.`); say(`Candado y tarjeta instalados en ${id}${posTxt}.`);}
+  renderP();
+}
+function computeEval(){
+  const M=P.M, L=id=>M.locks.has(id), V=M.v, f=M.f;
+  const req=[], trap=[];
+  const R=(t,ok,crit,fb)=>req.push({t,ok,crit,fb});
+  R('Detención desde la sala (DCS) antes de abrir S-101',f.stop==='dcs'&&!f.loadSwitch,false,f.stop==='maint'?'Detuviste P-101 activando el modo mantención: no es la condición normal de detención. Se usa el pulsador PARADA.':f.loadSwitch?'Abriste S-101 con la bomba en marcha: maniobra bajo carga sin detención previa desde la sala. Se penaliza, pero no es una vulneración del control crítico.':(f.stop==='dcs'?'Correcto.':'La detención se hace desde la sala con el pulsador de parada del DCS.'));
+  R('Secuencia 1 · interruptor eléctrico bloqueado antes que las válvulas',!f.seqElec,false,f.seqElec?'Bloqueaste válvulas de la línea antes de bloquear S-101. El orden es: primero la energía eléctrica, después la línea.':'Correcto.');
+  R('Secuencia 1b · aire del actuador (VA-1) bloqueado antes de cerrar V-2',!f.seqAir,false,f.seqAir?'Cerraste o bloqueaste V-2 antes de cerrar y bloquear VA-1. El orden es: primero se aísla el aire del actuador y luego se cierra V-2.':'Correcto.');
+  R('S-101 en O con candado',M.s101==='O'&&L('S-101'),true,M.s101!=='O'?'S-101 sigue en I: la energía eléctrica no está aislada.':(!L('S-101')?'S-101 está en O pero sin candado: cualquiera puede volver a conectarlo.':'Aislación eléctrica correcta.'));
+  R('V-1 (succión) cerrada con candado',!V['V-1']&&L('V-1'),true,V['V-1']?(L('V-1')?'V-1 quedó bloqueada en posición ABIERTA: no aísla.':'V-1 sigue abierta: entra fluido desde TK-100.'):(!L('V-1')?'V-1 cerrada pero sin candado.':'Correcto.'));
+  R('V-5 (recirculación) cerrada con candado',!V['V-5']&&L('V-5'),true,V['V-5']?(L('V-5')?'V-5 quedó bloqueada en posición ABIERTA: no aísla.':'V-5 sigue abierta: es un segundo camino desde TK-100 que <b>no aparece en la ficha</b>.'):(!L('V-5')?'V-5 cerrada pero sin candado.':'Correcto: detectaste el camino que no estaba en la ficha.'));
+  R('V-2 (descarga) cerrada con candado',!V['V-2']&&L('V-2'),true,V['V-2']?(L('V-2')?'V-2 quedó bloqueada en posición ABIERTA: no aísla.':'V-2 sigue abierta: el cabezal de 6 bar llega al tramo.'):(!L('V-2')?'V-2 cerrada pero sin candado: el actuador o una persona podrían abrirla.':'Correcto.'));
+  R('VA-1 (aire del actuador) cerrada y venteada con candado',!V['VA-1']&&L('VA-1'),true,V['VA-1']?'VA-1 sigue abierta: el actuador de V-2 tiene aire (PI-102 en 6 bar) y el DCS puede moverla.':(!L('VA-1')?'VA-1 cerrada pero sin candado.':'Correcto.'));
+  R('Secuencia 2 · purga abierta después de bloquear la línea principal',!f.seqPurge,false,f.seqPurge?'Abriste o bloqueaste la purga antes de tener la línea principal bloqueada en posición cerrada.':'Correcto.');
+  R('V-3 (drenaje) bloqueada en posición abierta',V['V-3']&&L('V-3'),!V['V-3'],!V['V-3']?(L('V-3')?'V-3 quedó bloqueada en posición CERRADA: la presión queda atrapada y no hay disipación.':'V-3 está cerrada: no hay disipación ni protección contra la reacumulación de presión.'):(!L('V-3')?'V-3 está abierta pero sin candado: alguien podría cerrarla y la presión se reacumularía.':'Correcto: bloqueada abierta.'));
+  R('PI-101 en 0 bar (energía hidráulica disipada)',M.p===0,true,M.p===0?'Correcto.':`PI-101 marca ${fmt(M.p)} bar: hay energía hidráulica en el tramo.`);
+  { const T=temp(M); R('Temperatura apta antes de intervenir (TI-101 ≤ '+T_OK+' °C)',T<=T_OK,true,T<=T_OK?'Correcto: esperaste el enfriamiento.':'TI-101 marca '+Math.round(T)+' °C: la carcasa aún está caliente. Espera que baje antes de intervenir.'); }
+  R('Prueba de partida desde el DCS en modo mantención, con S-101 bloqueado',!!f.startTry,true,f.startTry?'Correcto: P-101 no partió.':'No hay una prueba de partida válida: se hace desde el DCS en modo mantención, con S-101 bloqueado y después de bloquear la línea y liberar la presión con la purga.');
+  const iso=M.s101==='O'&&L('S-101');
+  const T=(t,crit,fb)=>trap.push({t,crit,fb});
+  if(f.s102||L('S-102')) T('Operaste S-102 (gaveta 1)',false,'S-102 alimenta a P-102, otro equipo. Verifica la identificación de la gaveta antes de maniobrar.');
+  if(L('GM-101')||f.gmOff) T('Guardamotor GM-101 operado o bloqueado',false,'El guardamotor es una protección, no un dispositivo de aislación. Se penaliza, pero no es crítico: la aislación eléctrica es S-101.');
+  if((f.stoUsed||f.maintUsed)&&!iso) T('STO o modo mantención usados sin aislación eléctrica',true,'Prohibición crítica: un mando, un PLC o un software no pueden ser el único aislamiento.');
+  if(L('PSV-4')) T('Candado en la válvula de alivio PSV-4',false,'Bloquearla anula la protección contra sobrepresión. Debe quedar libre y operativa.');
+  if(L('CV-1')) T('Tarjeta en la retención CV-1',false,'La retención no es un punto de aislación: no se opera ni se bloquea.');
+  if(f.drainHeader) T('Drenaje abierto con V-2 abierta',false,'Descargaste el cabezal al sumidero. Primero se aísla y después se disipa.');
+  if(f.closedRunning) T('Válvula cerrada con la bomba en marcha',false,'Cerrar la succión o la descarga con la bomba en marcha la daña (cavitación o operación en vacío).');
+  if(f.measured) T('Apertura de la caja de conexiones para medir en bornes',false,'No aplica a esta tarea: el cambio de sello no tiene intervención eléctrica. Abrir la caja agrega una exposición innecesaria.');
+  const okN=req.filter(r=>r.ok).length, critN=req.filter(r=>!r.ok&&r.crit).length+trap.filter(t=>t.crit).length;
+  const pct=Math.max(0,Math.round((okN-trap.length*0.5)/req.length*100));
+  const verdict=critN?['No aprobado','crit','Quedó al menos un error crítico: en terreno no se podría intervenir.']:(pct>=80?['Aprobado','good','Equipo aislado, bloqueado y verificado.']:['Requiere refuerzo','mid','Sin errores críticos, pero con observaciones.']);
+  return {req,trap,critN,pct,verdict};
+}
+const HITOS=[['stop','Detención de P-101'],['elec','S-101 bloqueado en O'],['main','Línea principal bloqueada cerrada (V-1, V-2, V-5, VA-1)'],['purge','Purga V-3 bloqueada abierta y presión en 0 bar'],['test','Prueba de partida conforme (después de la purga)'],['temp','Temperatura apta (TI-101 ≤ '+T_OK+' °C)']];
+function practiceDecide(go){
+  milestones();
+  const M=P.M, E=computeEval(), ms=M.ms||{}, when=stamp();
+  const pend=E.req.filter(r=>!r.ok&&r.crit).length+E.trap.filter(t=>t.crit).length;
+  if(!go){
+    log('Decisión: <b>no intervenir todavía</b>.');
+    if(pend) say(`<b>Decisión correcta:</b> todavía no es seguro intervenir. Quedan ${pend} condición(es) crítica(s) pendiente(s).`,'good');
+    else say('Las condiciones críticas para intervenir ya están cumplidas. Puedes decidir intervenir.','warn');
+    return;
+  }
+  M.intervene={ok:!pend,at:when}; ms.go={t:Date.now(),s:when};
+  log(`Decisión: <b>intervenir</b> (${pend?'con condiciones críticas pendientes':'condiciones cumplidas'}).`);
+  say(pend?'<b>Decidiste intervenir con condiciones inseguras.</b> Revisa el resultado.':'<b>Intervención iniciada:</b> cambio de sello en curso.',pend?'bad':'good');
+  renderP();
+  // línea de tiempo y orden
+  let last=0, rows='';
+  HITOS.forEach(([k,n],i)=>{
+    const h=ms[k]; let st;
+    if(!h) st='<span class="badge b-crit">Falta</span>';
+    else { const ord = k==='test' ? h.t>=(ms.purge?ms.purge.t:Infinity) : k==='temp' ? h.t>=(ms.elec?ms.elec.t:Infinity) : h.t>=last; st= ord?'<span class="badge b-ok">En orden</span>':'<span class="badge b-miss">Fuera de orden</span>'; if(k!=='test'&&k!=='temp') last=Math.max(last,h.t); }
+    rows+=`<tr><td>${i+1}</td><td>${n}</td><td>${h?h.s:'—'}</td><td>${st}</td></tr>`;
+  });
+  rows+=`<tr><td>7</td><td><b>Decisión de intervenir</b></td><td>${when}</td><td>${pend?'<span class="badge b-crit">Con pendientes críticos</span>':'<span class="badge b-ok">Habilitada</span>'}</td></tr>`;
+  const li=r=>`<li>${r.ok?'<span class="badge b-ok">OK</span>':(r.crit?'<span class="badge b-crit">Crítico</span>':'<span class="badge b-miss">Obs.</span>')}<b>${r.t}.</b> ${r.fb}</li>`;
+  const v=pend?['Intervención no autorizada','crit','Decidiste intervenir con al menos una condición crítica sin cumplir: en terreno corresponde Stop Work.']:E.verdict;
+  document.getElementById('peval').innerHTML=`<h3>Resultado de la decisión de intervenir</h3>
+   <div class="result ${v[1]}"><b>${v[0]}.</b> ${v[2]}</div>
+   <div class="kpis"><div class="kpi"><b>${E.pct}%</b><span>Desempeño</span></div><div class="kpi"><b>${E.critN}</b><span>Errores críticos</span></div><div class="kpi"><b>${E.trap.length}</b><span>Trampas activadas</span></div></div>
+   <h3>Secuencia registrada</h3>
+   <table><tr><th>#</th><th>Hito</th><th>Hora</th><th>Estado</th></tr>${rows}</table>
+   <p class="ref">Orden esperado: detención desde la sala → bloqueo eléctrico → línea principal cerrada → purga abierta → prueba de partida → temperatura apta → decisión de intervenir.</p>
+   <h3>Requisitos</h3><ul class="chk">${E.req.map(li).join('')}</ul>
+   ${E.trap.length?`<h3>Trampas y observaciones</h3><ul class="chk">${E.trap.map(t=>`<li>${t.crit?'<span class="badge b-crit">Crítico</span>':'<span class="badge b-bad">Incorrecto</span>'}<b>${t.t}.</b> ${t.fb}</li>`).join('')}</ul>`:'<p>No activaste ninguna trampa.</p>'}
+   <p class="ref">Después puedes hacer la restitución (proceso inverso) o reiniciar. Criterio de prueba no validado: aprobado si no hay errores críticos y el desempeño es de al menos 80%. Referencias: G-SSOMA-CE-00 v0.4 §5.2 y §5.3 pasos 3 a 7 y punto de liberación.</p>`;
+  document.getElementById('peval').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+// ================= MODO 2: EJERCICIO DE DECISIONES =================
+let S;
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function guidedStart(){
+  stopTick(); hideChrome();
+  const ev=shuffle(EVENTS).slice(0,3).map((e,k)=>Object.assign({},e,{tag:e.tag+' · evento '+(k+1)+' de 3'}));
+  const steps=[...BASE,...ev,...END].map(s=>{
+    const c=Object.assign({},s);
+    if(!s.diagram) c.opts=shuffle(s.opts.map((x,i)=>Object.assign({},x,{k:i})));
+    else c.opts=s.opts.map((x,i)=>Object.assign({},x,{k:i,id:s.ids[i]}));
+    return c;
+  });
+  S={i:-1,steps,res:[],sel:new Set(),done:false,locked:new Set(),stage:0};
+  S.model=modelFromStage(0,S.locked);
+  next();
+}
+function renderSideDiag(){ mountDiagram(document.getElementById('diagHolder'),{mode:'view',getModel:()=>S.model}); }
+function next(){
+  S.i++; S.sel=new Set(); S.done=false;
+  if(S.i>=S.steps.length){summary();return;}
+  document.getElementById('toolbar').style.display='flex';
+  document.getElementById('dFicha').style.display='block';
+  document.getElementById('fichaHolder').innerHTML=FICHA;
+  const st=S.steps[S.i];
+  document.getElementById('dDiag').style.display=st.diagram?'none':'block';
+  if(!st.diagram) renderSideDiag(); else document.getElementById('diagHolder').innerHTML='';
+  renderStep();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function renderStep(){
+  const st=S.steps[S.i], n=S.steps.length;
+  document.getElementById('bar').style.width=(S.i/n*100)+'%';
+  document.getElementById('ptxt').textContent='Etapa '+(S.i+1)+' de '+n;
+  if(st.showFicha) document.getElementById('dFicha').open=true;
+  const multi=st.type==='multi';
+  let h=`<div class="card"><span class="tag">${st.tag}</span><h2>${st.title}</h2><p class="ctx">${st.ctx}</p>`;
+  if(multi && !st.diagram) h+=`<p class="hint">Puedes marcar más de una opción.</p>`;
+  if(st.diagram) h+=`<p class="hint">Toca un equipo en la vista para marcarlo o desmarcarlo (también puedes usar la lista).</p><div id="dg"></div>`;
+  h+=`<div id="opts">`;
+  st.opts.forEach((op,idx)=>{
+    h+=`<label class="opt" id="op${idx}"><input type="${multi?'checkbox':'radio'}" name="q" data-i="${idx}"><div><div>${op.t}</div><div class="fb" id="fb${idx}" style="display:none"></div></div></label>`;
+  });
+  h+=`</div><div id="res"></div><div class="btns"><button class="primary" id="btnC" disabled onclick="confirmStep()">Confirmar</button></div></div>`;
+  app.innerHTML=h;
+  app.querySelectorAll('#opts input').forEach(inp=>inp.addEventListener('change',e=>{
+    const i=+e.target.dataset.i;
+    if(!multi) S.sel=new Set();
+    if(e.target.checked) S.sel.add(i); else S.sel.delete(i);
+    syncDiag(); document.getElementById('btnC').disabled=S.sel.size===0;
+  }));
+  if(st.diagram){
+    mountDiagram(document.getElementById('dg'),{mode:'select',getModel:()=>S.model,onPick:id=>{
+      if(S.done) return;
+      const idx=st.opts.findIndex(x=>x.id===id); if(idx<0) return;
+      const inp=app.querySelector(`#opts input[data-i="${idx}"]`);
+      inp.checked=!inp.checked; inp.dispatchEvent(new Event('change'));
+    }});
+  }
+}
+function syncDiag(){
+  const st=S.steps[S.i]; if(!st.diagram) return;
+  const dg=document.getElementById('dg');
+  st.opts.forEach((op,idx)=>{const g=dg.querySelector(`.pt[data-id="${op.id}"]`); if(g) g.classList.toggle('sel',S.sel.has(idx));});
+}
+const STAGE_BY_TAG=[['Paso 3',3],['Paso 4',4],['Paso 6',6],['Paso 7',7],['Paso 9',9],['Paso 10',10]];
+function confirmStep(){
+  const st=S.steps[S.i]; S.done=true;
+  const correct=st.opts.map((o,i)=>o.c?i:-1).filter(i=>i>=0);
+  let hits=0,wrong=0,crit=[],errs=[];
+  st.opts.forEach((op,idx)=>{
+    const sel=S.sel.has(idx), el=document.getElementById('op'+idx), fb=document.getElementById('fb'+idx);
+    el.classList.add('done'); el.querySelector('input').disabled=true;
+    let badge='';
+    if(op.n){ badge='<span class="badge b-neu">No aplica a esta tarea</span>'; }
+    else if(sel && op.c){hits++; el.classList.add('r-ok'); badge='<span class="badge b-ok">Correcto</span>';}
+    else if(sel && !op.c){wrong++; el.classList.add('r-bad');
+      badge= op.crit?'<span class="badge b-crit">Error crítico</span>':'<span class="badge b-bad">Incorrecto</span>';
+      if(op.crit) crit.push(op.t); else errs.push(op.t);}
+    else if(!sel && op.c){
+      if(st.type==='multi'){el.classList.add('r-miss');
+        badge= op.req?'<span class="badge b-crit">Omisión crítica</span>':'<span class="badge b-miss">Faltó marcar</span>';
+        if(op.req) crit.push('Omitido: '+op.t); else errs.push('Omitido: '+op.t);}
+      else {el.classList.add('r-miss'); badge='<span class="badge b-miss">Respuesta correcta</span>';}
+    } else { badge='<span class="badge b-neu">No marcada</span>'; }
+    fb.innerHTML=badge+op.fb; fb.style.display='block';
+  });
+  let score;
+  if(st.type==='single') score = hits?10:0;
+  else score = Math.max(0,(hits-wrong)/correct.length)*10;
+  score=Math.round(score*10)/10;
+  STAGE_BY_TAG.forEach(([t,v])=>{ if(st.tag.startsWith(t+' ')) S.stage=Math.max(S.stage,v); });
+  if(st.diagram) S.locked=new Set(st.opts.filter(x=>x.c).map(x=>x.id));
+  if(st.tag.startsWith('Paso 9 ')) S.locked=new Set();
+  S.model=modelFromStage(S.stage,S.locked);
+  if(st.diagram){
+    const dg=document.getElementById('dg'), svg=dg.querySelector('svg'); svg.classList.remove('selectable');
+    st.opts.forEach((op,idx)=>{const g=dg.querySelector(`.pt[data-id="${op.id}"]`); if(!g) return;
+      g.classList.remove('sel');
+      if(op.n) return; if(S.sel.has(idx)) g.classList.add(op.c?'ok':'bad'); else if(op.c) g.classList.add('miss');});
+    applyModel(svg,S.model);
+  } else applyModel(document.querySelector('#diagHolder svg'),S.model);
+  S.res.push({tag:st.tag,title:st.title,score,crit,errs,ref:st.ref});
+  const cls= crit.length?'crit':(score>=8?'good':'mid');
+  const msg= crit.length?`<b>Detener el trabajo.</b> ${crit.length} error(es) crítico(s) en esta etapa.`:(score>=8?'<b>Conforme.</b>':'<b>Conforme con observaciones.</b> Revisa lo que faltó.');
+  const extra = st.diagram ? '<br>La vista muestra ahora la aislación correcta: seccionador en O, válvulas en posición segura y candados instalados. Verde = bien marcado, rojo = mal marcado, naranjo punteado = faltó.' : (['Paso 3','Paso 6','Paso 9','Paso 10'].some(t=>st.tag.startsWith(t+' '))?'<br>Revisa la vista de terreno: el estado del equipo cambió.':'');
+  document.getElementById('res').innerHTML=`<div class="result ${cls}">${msg} Puntaje de la etapa: <b>${score}/10</b>.${extra}<div class="ref">Referencia: ${st.ref}</div></div>`;
+  const b=document.getElementById('btnC'); b.textContent= S.i===S.steps.length-1?'Ver resultado':'Siguiente'; b.disabled=false; b.onclick=next;
+}
+function summary(){
+  document.getElementById('bar').style.width='100%';
+  document.getElementById('ptxt').textContent='Ejercicio terminado';
+  document.getElementById('dDiag').style.display='none';
+  document.getElementById('dFicha').style.display='none';
+  const n=S.res.length, tot=S.res.reduce((a,r)=>a+r.score,0), pct=Math.round(tot/(n*10)*100);
+  const crits=S.res.reduce((a,r)=>a+r.crit.length,0);
+  const verdict= crits? ['No aprobado','crit','Hubo al menos un error crítico. En terreno, esto habría obligado a detener el trabajo.'] : (pct>=80?['Aprobado','good','Sin errores críticos y con un desempeño sobre el 80%.']:['Requiere refuerzo','mid','Sin errores críticos, pero con omisiones relevantes.']);
+  let rows=S.res.map(r=>`<tr class="crow"><td>${r.tag}</td><td>${r.title}</td><td>${r.score}/10</td><td>${r.crit.length?'<span class="badge b-crit">'+r.crit.length+'</span>':'—'}</td></tr>`).join('');
+  let det=S.res.filter(r=>r.crit.length||r.errs.length).map(r=>`<li><b>${r.tag}</b> — ${r.title}<ul class="tight">${r.crit.map(c=>'<li><span class="badge b-crit">Crítico</span>'+c+'</li>').join('')}${r.errs.map(c=>'<li><span class="badge b-bad">Obs.</span>'+c+'</li>').join('')}</ul><div class="ref">${r.ref}</div></li>`).join('');
+  app.innerHTML=`<div class="card">
+   <span class="tag">Resultado</span><h2>${verdict[0]}</h2>
+   <div class="result ${verdict[1]}">${verdict[2]}</div>
+   <div class="kpis"><div class="kpi"><b>${pct}%</b><span>Desempeño global</span></div><div class="kpi"><b>${crits}</b><span>Errores críticos</span></div><div class="kpi"><b>${n}</b><span>Etapas evaluadas</span></div></div>
+   <table><tr><th>Etapa</th><th>Tema</th><th>Puntaje</th><th>Críticos</th></tr>${rows}</table>
+   ${det?`<h3 style="margin-top:18px">Brechas a reforzar</h3><ul>${det}</ul>`:'<p>No hubo brechas. Repite el ejercicio para practicar con otros eventos.</p>'}
+   <p class="ref">Criterio de prueba: aprobado si no hay errores críticos y el desempeño es de al menos 80%. El criterio no está validado y es solo para este ensayo. La práctica virtual no reemplaza la observación en terreno (nivel 2) ni la evaluación práctica de habilitación.</p>
+   <div class="btns"><button class="primary" onclick="guidedStart()">Repetir con otros eventos</button><button class="ghost" onclick="home()">Volver al inicio</button><button class="ghost" onclick="copySum(${pct},${crits},'${verdict[0]}')">Copiar resumen</button></div>
+   <div id="cp"></div></div>`;
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function copySum(pct,crits,v){
+  const txt=['Simulador control de energías · P-101 (ejercicio de prueba)','Resultado: '+v+' · Desempeño '+pct+'% · Errores críticos: '+crits,'',
+   ...S.res.map(r=>`${r.tag} | ${r.title} | ${r.score}/10${r.crit.length?' | CRÍTICO: '+r.crit.join('; '):''}${r.errs.length?' | Obs.: '+r.errs.join('; '):''}`)].join('\n');
+  const show=()=>{document.getElementById('cp').innerHTML='<textarea readonly>'+txt.replace(/</g,'&lt;')+'</textarea>';};
+  try{navigator.clipboard.writeText(txt).then(()=>{document.getElementById('cp').innerHTML='<p class="ref">Resumen copiado al portapapeles.</p>';},show);}catch(e){show();}
+}
+home();
+</script>
+</body>
+</html>
