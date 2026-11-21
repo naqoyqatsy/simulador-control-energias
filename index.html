@@ -54,6 +54,10 @@ th{background:#eef2f5}
 .kpi span{font-size:12px;color:var(--muted)}
 .crow td:first-child{white-space:nowrap}
 ul.tight{margin:6px 0;padding-left:20px}
+.reg{margin-top:20px;border:1px solid #c9d6df;border-radius:10px;padding:14px 16px;background:#f5f8fa}
+.reg h3{margin-top:0}
+.reg .code{font:600 13px/1.4 ui-monospace,Menlo,Consolas,monospace;background:#fff;border:1px dashed #8aa1b1;border-radius:6px;padding:10px;word-break:break-all;user-select:all;margin:8px 0}
+.reg .ref{margin-top:8px}
 textarea{width:100%;height:160px;font:12px monospace;margin-top:8px}
 .modes{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
 .mode{border:1px solid var(--line);border-radius:10px;padding:14px;background:#fafbfc}
@@ -1147,7 +1151,9 @@ function practiceDecide(go){
    <p class="ref">Orden esperado: detención desde la sala → bloqueo eléctrico → línea principal cerrada → purga abierta → prueba de partida → temperatura apta → decisión de intervenir.</p>
    <h3>Requisitos</h3><ul class="chk">${E.req.map(li).join('')}</ul>
    ${E.trap.length?`<h3>Trampas y observaciones</h3><ul class="chk">${E.trap.map(t=>`<li>${t.crit?'<span class="badge b-crit">Crítico</span>':'<span class="badge b-bad">Incorrecto</span>'}<b>${t.t}.</b> ${t.fb}</li>`).join('')}</ul>`:'<p>No activaste ninguna trampa.</p>'}
-   <p class="ref">Después puedes hacer la restitución (proceso inverso) o reiniciar. Criterio de prueba no validado: aprobado si no hay errores críticos y el desempeño es de al menos 80%. Referencias: G-SSOMA-CE-00 v0.4 §5.2 y §5.3 pasos 3 a 7 y punto de liberación.</p>`;
+   <p class="ref">Después puedes hacer la restitución (proceso inverso) o reiniciar. Criterio de prueba no validado: aprobado si no hay errores críticos y el desempeño es de al menos 80%. Referencias: G-SSOMA-CE-00 v0.4 §5.2 y §5.3 pasos 3 a 7 y punto de liberación.</p>`+regBlock(resultCode({modo:'M1',res:pend?'NO_AUTORIZADA':({'Aprobado':'APROBADO','Requiere refuerzo':'REQUIERE_REFUERZO','No aprobado':'NO_APROBADO'})[E.verdict[0]],pct:E.pct,crit:E.critN,n:E.trap.length,min:Math.max(1,Math.round((Date.now()-P.t0)/60000)),
+     c:[...E.req.map((r,i)=>(!r.ok&&r.crit)?REQ_KEYS[i]:null).filter(Boolean),...E.trap.filter(t=>t.crit).map(t=>trapKey(t.t))],
+     o:[...E.req.map((r,i)=>(!r.ok&&!r.crit)?REQ_KEYS[i]:null).filter(Boolean),...E.trap.filter(t=>!t.crit).map(t=>trapKey(t.t))]}));
   document.getElementById('peval').scrollIntoView({behavior:'smooth',block:'start'});
 }
 
@@ -1163,7 +1169,7 @@ function guidedStart(){
     else c.opts=s.opts.map((x,i)=>Object.assign({},x,{k:i,id:s.ids[i]}));
     return c;
   });
-  S={i:-1,steps,res:[],sel:new Set(),done:false,locked:new Set(),stage:0};
+  S={i:-1,steps,res:[],sel:new Set(),done:false,locked:new Set(),stage:0,t0:Date.now()};
   S.model=modelFromStage(0,S.locked);
   next();
 }
@@ -1277,7 +1283,8 @@ function summary(){
    ${det?`<h3 style="margin-top:18px">Brechas a reforzar</h3><ul>${det}</ul>`:'<p>No hubo brechas. Repite el ejercicio para practicar con otros eventos.</p>'}
    <p class="ref">Criterio de prueba: aprobado si no hay errores críticos y el desempeño es de al menos 80%. El criterio no está validado y es solo para este ensayo. La práctica virtual no reemplaza la observación en terreno (nivel 2) ni la evaluación práctica de habilitación.</p>
    <div class="btns"><button class="primary" onclick="guidedStart()">Repetir con otros eventos</button><button class="ghost" onclick="home()">Volver al inicio</button><button class="ghost" onclick="copySum(${pct},${crits},'${verdict[0]}')">Copiar resumen</button></div>
-   <div id="cp"></div></div>`;
+   <div id="cp"></div>${(()=>{const seen={},keys=S.res.map(r=>stageKey(r,seen));return regBlock(resultCode({modo:'M2',res:({'Aprobado':'APROBADO','Requiere refuerzo':'REQUIERE_REFUERZO','No aprobado':'NO_APROBADO'})[verdict[0]],pct,crit:crits,n,min:Math.max(1,Math.round((Date.now()-S.t0)/60000)),
+     c:S.res.map((r,i)=>r.crit.length?keys[i]:null).filter(Boolean),o:S.res.map((r,i)=>(!r.crit.length&&r.score<10)?keys[i]:null).filter(Boolean)}));})()}</div>`;
   window.scrollTo({top:0,behavior:'smooth'});
 }
 function copySum(pct,crits,v){
@@ -1286,6 +1293,48 @@ function copySum(pct,crits,v){
   const show=()=>{document.getElementById('cp').innerHTML='<textarea readonly>'+txt.replace(/</g,'&lt;')+'</textarea>';};
   try{navigator.clipboard.writeText(txt).then(()=>{document.getElementById('cp').innerHTML='<p class="ref">Resumen copiado al portapapeles.</p>';},show);}catch(e){show();}
 }
+// ================= REGISTRO DE RESULTADOS (v1.3) =================
+// Pegar aquí el vínculo del formulario de Microsoft Forms.
+// FORM_URL: vínculo normal para responder.
+// FORM_PREFILL_URL: vínculo rellenado previamente (opcional), generado en Forms con el texto CODIGO en la pregunta "Código de resultado".
+const SIM_VER='v1.3';
+const FORM_URL='';
+const FORM_PREFILL_URL='';
+const REQ_KEYS=['DETENCION','SEQ_ELEC','SEQ_AIRE','S101','V1','V5','V2','VA1','SEQ_PURGA','V3','PI101_0','TEMP','PRUEBA'];
+const TRAP_KEYS=[['S-102','S102'],['Guardamotor','GM101'],['STO','STO'],['PSV-4','PSV4'],['CV-1','CV1'],['Drenaje','DRENAJE'],['Válvula cerrada','CIERRE_MARCHA'],['caja de conexiones','BORNES']];
+const EV_KEYS=[['colación','EV_COLACION'],['cuadrilla','EV_CUADRILLA'],['prueba','EV_PRUEBA'],['señal','EV_SENAL'],['persona','EV_PERSONA']];
+function trapKey(t){ const k=TRAP_KEYS.find(([n])=>t.indexOf(n)>=0); return k?k[1]:'OTRA'; }
+function stageKey(r,seen){
+  let k;
+  if(r.title.indexOf('Evento')===0){ const e=EV_KEYS.find(([n])=>r.title.toLowerCase().indexOf(n)>=0); k=e?e[1]:'EV'; }
+  else if(r.tag.indexOf('Punto de liberación')===0) k='LIBERACION';
+  else { const m=r.tag.match(/Paso (\d+)/); k=m?'P'+m[1]:'ETAPA'; }
+  seen[k]=(seen[k]||0)+1; return seen[k]>1?k+'_'+seen[k]:k;
+}
+function vhash(txt){ let h=2166136261; const t='EQUANS-CE-P101|'+txt; for(let i=0;i<t.length;i++){h^=t.charCodeAt(i); h=Math.imul(h,16777619)>>>0;} return h.toString(36).toUpperCase().padStart(7,'0').slice(-7); }
+function nowTxt(){ const d=new Date(),z=n=>String(n).padStart(2,'0'); return d.getFullYear()+'-'+z(d.getMonth()+1)+'-'+z(d.getDate())+' '+z(d.getHours())+':'+z(d.getMinutes()); }
+function resultCode(o){
+  const f=['SIMCE-P101',SIM_VER,o.modo,nowTxt(),o.res,o.pct,o.crit,o.n,o.min,'C:'+(o.c.join(',')||'-'),'O:'+(o.o.join(',')||'-')];
+  return f.join('|')+'|K:'+vhash(f.join('|'));
+}
+function regBlock(code){
+  const pre=FORM_PREFILL_URL&&FORM_PREFILL_URL.indexOf('CODIGO')>=0;
+  const url=pre?FORM_PREFILL_URL.split('CODIGO').join(encodeURIComponent(code)):FORM_URL;
+  const btn=url?`<button class="primary" onclick="window.open('${url.replace(/'/g,'%27')}','_blank','noopener')">Abrir formulario de registro</button>`:'';
+  return `<div class="reg"><h3>Registrar tu resultado</h3>
+   <p>Copia este código y pégalo en el formulario de registro${pre?' (ya viene incluido si usas el botón)':''}. No lo modifiques: el código lleva una verificación.</p>
+   <div class="code" id="rcode">${code}</div>
+   <div class="btns"><button class="ghost" onclick="copyCode()">Copiar código</button>${btn}</div>
+   <div id="rcp"></div>
+   <p class="ref"><b>Aviso:</b> al enviar el formulario se registran tu nombre completo, tu empresa, tu centro y este código, solo para analizar la capacitación en control de energías. El resultado del simulador es de práctica: no es evidencia de competencia ni de habilitación. Enviarlo es voluntario. El aviso completo está en el formulario.${url?'':' El relator te indicará el formulario de registro.'} Simulador ${SIM_VER}.</p></div>`;
+}
+function copyCode(){
+  const t=document.getElementById('rcode').textContent;
+  const ok=()=>{document.getElementById('rcp').innerHTML='<p class="ref">Código copiado.</p>';};
+  const bad=()=>{document.getElementById('rcp').innerHTML='<p class="ref">No se pudo copiar automáticamente: mantén presionado el código y cópialo.</p>';};
+  try{navigator.clipboard.writeText(t).then(ok,bad);}catch(e){bad();}
+}
+
 home();
 </script>
 </body>

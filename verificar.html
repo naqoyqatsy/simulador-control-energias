@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Verificador de códigos · Simulador P-101</title>
+<style>
+body{font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;margin:0;background:#f4f6f8;color:#14212b}
+header{background:#14212b;color:#fff;padding:14px 22px}header h1{font-size:18px;margin:0}
+main{max-width:1200px;margin:18px auto;padding:0 18px}
+textarea{width:100%;height:150px;font:12px ui-monospace,Menlo,Consolas,monospace}
+button{background:#0f6b6b;color:#fff;border:0;border-radius:6px;padding:8px 14px;font-weight:600;cursor:pointer;margin:8px 8px 8px 0}
+table{border-collapse:collapse;width:100%;background:#fff;font-size:12px;margin-top:10px}
+th,td{border:1px solid #d5dde3;padding:5px 7px;text-align:left;vertical-align:top}th{background:#e8eef2}
+.ok{color:#1f7a45;font-weight:700}.bad{color:#a12a1f;font-weight:700}p.ref{color:#55636e;font-size:12px}
+</style></head><body>
+<header><h1>Verificador de códigos de resultado · Simulador de control de energías P-101</h1></header>
+<main>
+<p>Pega los códigos de resultado (uno por línea, por ejemplo la columna «Código de resultado» exportada desde Forms). La herramienta separa los campos, comprueba la verificación y permite descargar un CSV para Excel o Power BI. Todo se procesa en este navegador: no se envían datos a ningún servidor.</p>
+<textarea id="in" placeholder="SIMCE-P101|v1.3|M1|2026-11-21 19:51|APROBADO|92|0|1|7|C:-|O:SEQ_AIRE|K:XXXXXXX"></textarea>
+<button onclick="run()">Verificar</button><button onclick="csv()">Descargar CSV</button>
+<div id="out"></div>
+<p class="ref">La verificación detecta códigos modificados a mano; no es una firma criptográfica. Campos: aplicación, versión, modo (M1 maniobra, M2 decisiones), fecha y hora, resultado, desempeño %, errores críticos, trampas (M1) o etapas (M2), minutos, claves con error crítico (C), claves con observaciones (O), verificación (K).</p>
+</main>
+<script>
+function vhash(txt){ let h=2166136261; const t='EQUANS-CE-P101|'+txt; for(let i=0;i<t.length;i++){h^=t.charCodeAt(i); h=Math.imul(h,16777619)>>>0;} return h.toString(36).toUpperCase().padStart(7,'0').slice(-7); }
+const H=['Código','Válido','Versión','Modo','Fecha y hora','Resultado','Desempeño %','Errores críticos','Trampas / etapas','Minutos','Claves críticas','Claves con observaciones'];
+let rows=[];
+function parse(line){
+  const c=line.trim().replace(/^"+|"+$/g,''); const f=c.split('|');
+  if(f.length!==12||f[0]!=='SIMCE-P101') return [c,'NO (formato)','','','','','','','','','',''];
+  const ok=('K:'+vhash(f.slice(0,11).join('|')))===f[11];
+  return [c,ok?'SÍ':'NO (alterado)',f[1],f[2],f[3],f[4],f[5],f[6],f[7],f[8],f[9].slice(2),f[10].slice(2)];
+}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');}
+function run(){
+  rows=document.getElementById('in').value.split(/\r?\n/).filter(l=>l.trim()).map(parse);
+  const okN=rows.filter(r=>r[1]==='SÍ').length;
+  document.getElementById('out').innerHTML=`<p><b>${rows.length}</b> códigos · <span class="ok">${okN} válidos</span> · <span class="bad">${rows.length-okN} no válidos</span></p><table><tr>${H.slice(1).map(h=>'<th>'+h+'</th>').join('')}</tr>${rows.map(r=>'<tr>'+r.slice(1).map((v,i)=>'<td'+(i===0?' class="'+(v==='SÍ'?'ok':'bad')+'"':'')+'>'+esc(v)+'</td>').join('')+'</tr>').join('')}</table>`;
+}
+function csv(){
+  if(!rows.length) run();
+  const q=v=>'"'+String(v).replace(/"/g,'""')+'"';
+  const t='﻿'+[H,...rows].map(r=>r.map(q).join(';')).join('\r\n');
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([t],{type:'text/csv;charset=utf-8'})); a.download='resultados_simulador_P-101.csv'; a.click();
+}
+</script></body></html>
