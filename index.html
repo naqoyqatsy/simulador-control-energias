@@ -1299,7 +1299,7 @@ function copySum(pct,crits,v){
 // FORM_PREFILL_URL: vínculo rellenado previamente (opcional), generado en Forms con el texto CODIGO en la pregunta "Código de resultado".
 const SIM_VER='v1.3';
 const FORM_URL='https://forms.cloud.microsoft/Pages/ResponsePage.aspx?id=4f3rCQVlMUyULxiHX_AYncB3qDBBdehDhqqkE1OvT0dURU1JOFQxVzJPVFBNNVI5TkdUV1pYQkRSOC4u';
-const FORM_PREFILL_URL='';
+const FORM_PREFILL_URL='https://forms.cloud.microsoft/Pages/ResponsePage.aspx?id=4f3rCQVlMUyULxiHX_AYncB3qDBBdehDhqqkE1OvT0dURU1JOFQxVzJPVFBNNVI5TkdUV1pYQkRSOC4u&r58a05298668b425c856f810fbffde621=CODIGO';
 const REQ_KEYS=['DETENCION','SEQ_ELEC','SEQ_AIRE','S101','V1','V5','V2','VA1','SEQ_PURGA','V3','PI101_0','TEMP','PRUEBA'];
 const TRAP_KEYS=[['S-102','S102'],['Guardamotor','GM101'],['STO','STO'],['PSV-4','PSV4'],['CV-1','CV1'],['Drenaje','DRENAJE'],['Válvula cerrada','CIERRE_MARCHA'],['caja de conexiones','BORNES']];
 const EV_KEYS=[['colación','EV_COLACION'],['cuadrilla','EV_CUADRILLA'],['prueba','EV_PRUEBA'],['señal','EV_SENAL'],['persona','EV_PERSONA']];
@@ -1322,7 +1322,7 @@ function regBlock(code){
   const url=pre?FORM_PREFILL_URL.split('CODIGO').join(encodeURIComponent(code)):FORM_URL;
   const btn=url?`<button class="primary" onclick="openForm('${url.replace(/'/g,'%27')}',${pre?1:0})">${pre?'Abrir formulario de registro':'Copiar código y abrir formulario'}</button>`:'';
   return `<div class="reg"><h3>Registrar tu resultado</h3>
-   <p>${pre?'Usa el botón: el formulario se abre con el código ya incluido.':'Usa el botón: el código se copia y se abre el formulario. En la pregunta 7, mantén presionado (o clic derecho) y elige <b>Pegar</b>.'} No modifiques el código: lleva una verificación.</p>
+   <p>${pre?'Usa el botón: el formulario se abre con el código ya incluido en la pregunta 7. Si Forms pregunta por un borrador anterior, elige <b>Nuevo borrador</b>.':'Usa el botón: el código se copia y se abre el formulario. En la pregunta 7, mantén presionado (o clic derecho) y elige <b>Pegar</b>.'} No modifiques el código: lleva una verificación.</p>
    <div class="code" id="rcode">${code}</div>
    <div class="btns"><button class="ghost" onclick="copyCode()">Copiar código</button>${btn}</div>
    <div id="rcp"></div>
