@@ -1320,14 +1320,21 @@ function resultCode(o){
 function regBlock(code){
   const pre=FORM_PREFILL_URL&&FORM_PREFILL_URL.indexOf('CODIGO')>=0;
   const url=pre?FORM_PREFILL_URL.split('CODIGO').join(encodeURIComponent(code)):FORM_URL;
-  const btn=url?`<button class="primary" onclick="window.open('${url.replace(/'/g,'%27')}','_blank','noopener')">Abrir formulario de registro</button>`:'';
+  const btn=url?`<button class="primary" onclick="openForm('${url.replace(/'/g,'%27')}',${pre?1:0})">${pre?'Abrir formulario de registro':'Copiar código y abrir formulario'}</button>`:'';
   return `<div class="reg"><h3>Registrar tu resultado</h3>
-   <p>Copia este código y pégalo en el formulario de registro${pre?' (ya viene incluido si usas el botón)':''}. No lo modifiques: el código lleva una verificación.</p>
+   <p>${pre?'Usa el botón: el formulario se abre con el código ya incluido.':'Usa el botón: el código se copia y se abre el formulario. En la pregunta 7, mantén presionado (o clic derecho) y elige <b>Pegar</b>.'} No modifiques el código: lleva una verificación.</p>
    <div class="code" id="rcode">${code}</div>
    <div class="btns"><button class="ghost" onclick="copyCode()">Copiar código</button>${btn}</div>
    <div id="rcp"></div>
    <p class="ref"><b>Aviso:</b> al enviar el formulario se registran tu nombre completo, tu empresa, tu centro y este código, solo para analizar la capacitación en control de energías. El resultado del simulador es de práctica: no es evidencia de competencia ni de habilitación. Enviarlo es voluntario. El aviso completo está en el formulario.${url?'':' El relator te indicará el formulario de registro.'} Simulador ${SIM_VER}.</p></div>`;
 }
+function openForm(url,pre){
+  const t=document.getElementById('rcode').textContent;
+  const go=()=>window.open(url,'_blank','noopener');
+  if(pre){ go(); return; }
+  try{ navigator.clipboard.writeText(t).then(()=>{document.getElementById('rcp').innerHTML='<p class="ref"><b>Código copiado.</b> Pégalo en la pregunta 7 del formulario.</p>'; go();},()=>{copyFail(); go();}); }catch(e){ copyFail(); go(); }
+}
+function copyFail(){ document.getElementById('rcp').innerHTML='<p class="ref">No se pudo copiar automáticamente: vuelve a esta página, mantén presionado el código y cópialo.</p>'; }
 function copyCode(){
   const t=document.getElementById('rcode').textContent;
   const ok=()=>{document.getElementById('rcp').innerHTML='<p class="ref">Código copiado.</p>';};
